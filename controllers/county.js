@@ -78,7 +78,7 @@ const counties = [
     "county_name": "Orange",
     "property_tax_link": "https://county-taxes.net/fl-orange/property-tax",
     "path": "/tax/FL/orange",
-    "status": 1
+    "status": 0
   },
   {
     "id": 10,
@@ -5136,7 +5136,7 @@ const counties = [
     "county_name": "Kern",
     "property_tax_link": "https://www.kcttc.co.kern.ca.us/payment/MainSearch.aspx",
     "path": "/tax/CA/kern",
-    "status": 1
+    "status": 0
   },
   {
     "id": 576,

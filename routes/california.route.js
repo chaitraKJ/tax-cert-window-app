@@ -16,8 +16,8 @@ import { search as common_search } from "../controllers/CA/common.controller.js"
 import { search as ventura_search } from "../controllers/CA/ventura.controller.js";
 import { search as fresno_search } from "../controllers/CA/fresno.controller.js";
 import { search as san_bernardino_search } from "../controllers/CA/san_bernardino.controller.js";
-import { search as kern_search } from "../controllers/CA/kern.controller.js";
-import { search as orange_search } from "../controllers/CA/orange.controller.js";
+// import { search as kern_search } from "../controllers/CA/kern.controller.js";
+// import { search as orange_search } from "../controllers/CA/orange.controller.js";
 
 const route = express.Router()
 
@@ -79,7 +79,7 @@ route.post("/alameda", alameda_search);
 route.post("/ventura", ventura_search);
 route.post("/fresno", fresno_search);
 route.post("/san-bernardino", san_bernardino_search);
-route.post("/kern", kern_search);
-route.post("/orange", orange_search);
+// route.post("/kern", kern_search);
+// route.post("/orange", orange_search);
 
 export default route;
