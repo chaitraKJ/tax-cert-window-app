@@ -1,4 +1,8 @@
 import  { app, BrowserWindow } from "electron";
+import { updateElectronApp } from 'update-electron-app';
+
+updateElectronApp();
+
 import "./index.js";
 
 let mainWindow;

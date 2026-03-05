@@ -50,8 +50,7 @@ export default {
           name: 'tax-cert-window-app'
         },
         prerelease: false,
-        draft: true,
-        authToken: process.env.GITHUB_TOKEN,
+        draft: true
       }
     }
   ]
