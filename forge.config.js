@@ -41,4 +41,17 @@ export default {
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
   ],
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'chaitraKJ',
+          name: 'tax-cert-window-app'
+        },
+        prerelease: false,
+        draft: true
+      }
+    }
+  ]
 };
