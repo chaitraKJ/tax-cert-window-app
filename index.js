@@ -15,11 +15,7 @@ app.engine('.html', ejs.__express);
 app.use(express.static('public'));
 app.set('view engine', 'html');
 
-import user_router from "./routes/user.route.js";
 import misc_router from "./routes/misc.route.js";
-import county_router from "./routes/county.route.js";
-
-import protectRoute from "./middleware/protectRoute.js";
 
 import alabama_router from "./routes/alabama.route.js";
 import arizona_router from "./routes/arizona.route.js";
@@ -50,7 +46,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true,}));
 
 app.use("/tax/*", (req, res, next) => { console.log("Requested Path:" +req['originalUrl'] +", Type:"+ req['body']['fetch_type'] +", Account:"+ req['body']['account']); next(); });
-app.get("/tax", protectRoute, (req, res) => { res.render('order_search') });
+
+app.get("/", (req, res) => { res.render('order_search') });
+app.get("/tax", (req, res) => { res.render('order_search') });
 app.use("/tax/AL", alabama_router);
 app.use("/tax/FL", florida_router);
 app.use("/tax/AZ", arizona_router);
@@ -74,14 +72,8 @@ app.use("/tax/UT", utah_route);
 app.use("/tax/WA", washington_router);
 
 app.use("/tax/:state/:county", (req, res) => { res.json({ error: true, message: "Service Unavailable for this county" }) });
-
-app.use("/user", user_router);
-app.use("/misc", protectRoute, misc_router);
-app.use("/county", protectRoute, county_router);
-
-app.get("/login", (req, res) => { res.render('login'); });
-app.get("/register", (req, res) => { res.render('register'); });
-app.get("*", protectRoute, (req, res) => { res.render('page_not_found'); });
+app.use("/misc", misc_router);
+app.get("*", (req, res) => { res.render('page_not_found'); });
 
 const PORT = process.env.PORT | 3000;
 app.listen(PORT, async () => {

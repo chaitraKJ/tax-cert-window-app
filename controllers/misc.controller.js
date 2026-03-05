@@ -1,4 +1,4 @@
-import connectDB from "../db/connection.js";
+import counties from "./county.js";
 
 const getCounty = async (req, res) => {
 	const { state } = req.query;
@@ -9,23 +9,18 @@ const getCounty = async (req, res) => {
 	}
 
 	try{
-		const conn = await connectDB();
-		const sql = `SELECT county_name, path FROM county WHERE state_code='${state}' AND status=1 ORDER BY county_name ASC`;
-		const [rows] = await conn.query(sql);
-		await conn.end();
-
-		const result = [];
-		rows.forEach((obj) => {
-			result.push({
-				county: obj['county_name'],
-				path: obj['path']
-			});
+		let result = [];
+		counties.forEach((county, i) => {
+			if(county['state_code'] == state && county['status'] == 1){
+				result.push({
+					county: county['county_name'],
+					path: county['path']
+				});
+			}
 		});
-
 		return res.status(200).json({
 			data: result
 		});
-
 	}
 	catch(error){
 		console.log(error.message);
