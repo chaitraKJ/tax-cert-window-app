@@ -1,0 +1,156 @@
+<%- include('../header.html') -%>
+<%- include('../menu.html') -%>
+
+<style type="text/css">
+	
+</style>
+
+<main class="container">
+
+	<div class="row gx-5">
+		
+		<div class="col-sm-12 col-md-12 p-1">
+			<div class="bg-body-tertiary p-4">	
+				<h6><span class="badge text-bg-secondary rounded-0">Add County</span></h6>
+				<br>
+				<form id="county_add_form">
+					<div class="row">
+						<div class="col-sm-4 col-md-4">
+							<label for="state_code" class="form-label">State Code</label>
+							<select class="form-select" name="state_code" id="state_code" aria-label="Default select example" required autocomplete="off">
+								<option selected value="" disabled>Select State Code</option>								
+							</select>
+						</div>
+						<div class="col-sm-4 col-md-4">
+							<label for="state_name" class="form-label">State Name</label>
+							<input type="text" class="form-control" name="state_name" id="state_name" readonly required autocomplete="off">
+						</div>
+						<div class="col-sm-4 col-md-4">
+							<label for="county_name" class="form-label">County Name</label>
+							<input type="text" class="form-control" name="county_name" id="county_name" required autocomplete="off">
+						</div>
+					</div>
+					<br>
+					<div class="row">												
+						<div class="mb-3">
+							<label for="website_link" class="form-label">Property Tax Website Link</label>
+							<input type="text" class="form-control" name="website_link" id="website_link" required autocomplete="off">
+						</div>						
+					</div>
+					<div class="row">
+						<div class="col-sm-6 col-md-6">
+							<label for="state_code" class="form-label">State Code</label>
+							<label for="path" class="form-label">App Path</label>
+							<input type="text" class="form-control" name="path" id="path" placeholder="/tax/{state_code}/{county_name}" required autocomplete="off">
+						</div>
+						<div class="col-sm-6 col-md-6">
+							<label for="status" class="form-label">Status</label>
+							<select class="form-select" name="status" id="status" aria-label="Default select example" autocomplete="off">
+								<option selected value="" disabled>Select status</option>								
+								<option value="1">Live</option>								
+								<option value="0">Disabled</option>								
+							</select>
+						</div>						
+					</div>	
+					<br>					
+					<div class="d-grid d-md-flex justify-content-md-end mt-4">
+						<div class="me-5" hidden id="result-display"><b>Hello</b></div>
+						<button type="submit" id="bothBtn" class="btn btn-primary px-4 btn-sm rounded-0">Add County</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+	</div>
+
+</main>
+
+<script>
+
+	(() => {
+		const state_data = {"AL":"Alabama","AK":"Alaska","AZ":"Arizona","AR":"Arkansas","CA":"California","CO":"Colorado","CT":"Connecticut","DC": "District Of Columbia","DE":"Delaware","FL":"Florida","GA":"Georgia","HI":"Hawaii","ID":"Idaho","IL":"Illinois","IN":"Indiana","IA":"Iowa","KS":"Kansas","KY":"Kentucky","LA":"Louisiana","ME":"Maine","MD":"Maryland","MA":"Massachusetts","MI":"Michigan","MN":"Minnesota","MS":"Mississippi","MO":"Missouri","MT":"Montana","NE":"Nebraska","NV":"Nevada","NH":"New Hampshire","NJ":"New Jersey","NM":"New Mexico","NY":"New York","NC":"North Carolina","ND":"North Dakota","OH":"Ohio","OK":"Oklahoma","OR":"Oregon","PA":"Pennsylvania","RI":"Rhode Island","SC":"South Carolina","SD":"South Dakota","TN":"Tennessee","TX":"Texas","UT":"Utah","VT":"Vermont","VA":"Virginia","WA":"Washington","WV":"West Virginia","WI":"Wisconsin","WY":"Wyoming"};	
+
+		// LOAD THE STATE CODE
+		const state_code_select = document.getElementById("state_code");
+		const state_name_input = document.getElementById("state_name");
+		const path_input = document.getElementById("path");
+		function load_state_code(){
+			for(const property in state_data) {
+				const option = document.createElement("option");
+				option.value = property;
+				option.textContent = property;
+				state_code_select.append(option)
+			}
+		}
+		load_state_code();
+
+		// AUTO FILL THE STATE NAME
+		state_code_select.addEventListener("change", () => {
+			let value = state_code_select.value;
+			state_name_input.value = state_data[value];
+			path_input.value = `/tax/${value}/`;
+		})
+	})();
+
+	(() => {
+
+		// SUBMIT THE FORM
+		const form = document.getElementById("county_add_form");
+		const resultDiv = document.getElementById("result-display");
+		form.addEventListener("submit" , async (event) => {
+			event.preventDefault();
+
+			resultDiv.setAttribute("hidden", true);
+			resultDiv.classList.remove("text-danger");
+			resultDiv.classList.remove("text-success");
+
+			const data = {
+				state_code: form.querySelector("#state_code").value,
+				state_name: form.querySelector("#state_name").value,
+				county_name: form.querySelector("#county_name").value,
+				website_link: form.querySelector("#website_link").value,
+				path: form.querySelector("#path").value,
+				status: form.querySelector("#status").value,
+			};
+
+			if(data['state_code'] == "" || data['state_name'] == "" || data['county_name'] == "" || data['website_link'] == "" || data['path'] == "" || data['status'] == ""){
+				resultDiv.removeAttribute("hidden");
+				resultDiv.classList.add("text-danger");
+				resultDiv.textContent = "Pleas fill all the data";
+				return;
+			}
+
+			try{
+				const response = await fetch(`/county/add`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(data)
+				});
+				const result = await response.json();
+
+				if(result.error){
+					resultDiv.removeAttribute("hidden");
+					resultDiv.classList.add("text-danger");
+					resultDiv.textContent = result.message;
+					return;
+				}
+
+				resultDiv.removeAttribute("hidden");
+				resultDiv.classList.add("text-success");
+				resultDiv.textContent = result.message;
+			}
+			catch(error){
+				console.log(error);
+				resultDiv.removeAttribute("hidden");
+				resultDiv.classList.add("text-danger");
+				resultDiv.textContent = error;
+			}			
+		})
+
+	})();
+
+</script>
+
+<%- include('../footer.html') -%>

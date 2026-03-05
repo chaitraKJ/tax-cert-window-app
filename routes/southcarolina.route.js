@@ -1,0 +1,72 @@
+import express from "express";
+
+const route = express.Router();
+
+import { search as qpaySearch } from "../controllers/SC/multi_county_qpay.controller.js";
+
+import { search as aiken_search } from "../controllers/SC/aiken.controller.js";
+import { search as chester_search } from "../controllers/SC/chester.controller.js";
+import { search as fairfield_search } from "../controllers/SC/fairfield.controller.js";
+import { search as hampton_search } from "../controllers/SC/hampton.controller.js";
+import { search as pickens_search } from "../controllers/SC/pickens.controller.js";
+import { search as york_search } from "../controllers/SC/york.controller.js";
+import { search as florence_search } from "../controllers/SC/florence.controller.js";
+import { search as georgetown_search } from "../controllers/SC/georgetown.controller.js";
+import { search as richland_search } from "../controllers/SC/richland.controller.js";
+import { search as berkeley_search } from "../controllers/SC/berkeley.controller.js";
+import { search as greenville_search } from "../controllers/SC/greenville.controller.js";
+import { search as greenwood_search } from "../controllers/SC/greenwood.controller.js";
+import { search as dorchester_search } from "../controllers/SC/dorchester.controller.js";
+import { search as charleston_search } from "../controllers/SC/charleston.controller.js";
+import { search as jasper_search } from "../controllers/SC/jasper.controller.js";
+import { search as anderson_search } from "../controllers/SC/anderson.controller.js";
+import { search as beaufort_search } from "../controllers/SC/beaufort.controller.js";
+
+route.post("/marlboro", qpaySearch);
+route.post("/union", qpaySearch);
+route.post("/bamberg", qpaySearch);
+route.post("/williamsburg", qpaySearch);
+route.post("/dillon", qpaySearch);
+route.post("/colleton", qpaySearch);
+route.post("/calhoun", qpaySearch);
+route.post("/mccormick", qpaySearch);
+route.post("/newberry", qpaySearch);
+route.post("/abbeville", qpaySearch);
+route.post("/chesterfield", qpaySearch);
+route.post("/spartanburg", qpaySearch);
+route.post("/barnwell", qpaySearch);
+route.post("/allendale", qpaySearch);
+route.post("/sumter", qpaySearch);
+route.post("/cherokee", qpaySearch);
+route.post("/darlington", qpaySearch);
+route.post("/kershaw", qpaySearch);
+route.post("/laurens", qpaySearch);
+route.post("/horry", qpaySearch);
+route.post("/oconee", qpaySearch);
+route.post("/lexington", qpaySearch);
+route.post("/saluda", qpaySearch);
+route.post("/lancaster", qpaySearch);
+route.post("/clarendon", qpaySearch);
+route.post("/lee", qpaySearch);
+route.post("/edgefield", qpaySearch);
+route.post("/orangeburg", qpaySearch);
+
+route.post("/aiken", aiken_search);
+route.post("/chester", chester_search);
+route.post("/fairfield", fairfield_search);
+route.post("/hampton", hampton_search);
+route.post("/pickens", pickens_search);
+route.post("/york", york_search);
+route.post("/florence", florence_search);
+route.post("/georgetown", georgetown_search);
+route.post("/richland", richland_search);
+route.post("/berkeley", berkeley_search);
+route.post("/greenville", greenville_search);
+route.post("/greenwood", greenwood_search);
+route.post("/dorchester", dorchester_search);
+route.post("/charleston", charleston_search);
+route.post("/jasper", jasper_search);
+route.post("/anderson", anderson_search);
+route.post("/beaufort", beaufort_search);
+
+export default route;
