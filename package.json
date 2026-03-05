@@ -1,32 +1,43 @@
 {
-    "name": "Tax-cert-app",
-    "version": "1.0.0",
-    "main": "index.js",
-    "type": "module",
-    "scripts": {
-        "start": "electron main.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "",
-    "license": "ISC",
-    "description": "",
-    "dependencies": {
-        "base64topdf": "^1.1.8",
-        "bcryptjs": "^3.0.2",
-        "cookie-parser": "^1.4.7",
-        "cors": "^2.8.5",
-        "dotenv": "^16.4.7",
-        "ejs": "^3.1.10",
-        "express": "^4.21.2",
-        "jsonwebtoken": "^9.0.2",
-        "mysql2": "^3.14.0",
-        "node-fetch": "^3.3.2",
-        "pdf2json": "^3.2.2",
-        "puppeteer": "^24.4.0",
-        "sharp": "^0.34.5",
-        "tesseract.js": "^7.0.0"
-    },
-    "devDependencies": {
-        "electron": "^40.7.0"
-    }
+  "name": "Tax-cert-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron-forge start",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "author": "Chaitra",
+  "license": "ISC",
+  "description": "Auto Tax Certificate Generator",
+  "dependencies": {
+    "base64topdf": "^1.1.8",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "electron-squirrel-startup": "^1.0.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.0",
+    "node-fetch": "^3.3.2",
+    "pdf2json": "^3.2.2",
+    "puppeteer": "^24.4.0",
+    "sharp": "^0.34.5",
+    "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-deb": "^7.11.1",
+    "@electron-forge/maker-rpm": "^7.11.1",
+    "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
+    "@electron-forge/plugin-fuses": "^7.11.1",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^40.7.0"
+  }
 }
