@@ -1,51 +1,51 @@
-const { app, BrowserWindow } = require('electron');
+const electron = require('electron');
 const { updateElectronApp } = require('update-electron-app');
 // updateElectronApp();
-
-require("./index.js");
 
 let mainWindow;
 
 function createWindow() {
-    mainWindow = new BrowserWindow({
-            width: 1200,
-            height: 700,
-            webPreferences: {
-                nodeIntegration: true,
+    mainWindow = new electron.BrowserWindow({
+        width: 1200,
+        height: 700,
+        webPreferences: {
+            nodeIntegration: true,
         },
     });
 
-    app.isPackaged
+    electron.app.isPackaged
         ? mainWindow.loadFile(path.join(__dirname, "views/order_search.html")) // Prod
         : mainWindow.loadURL("http://localhost:3000"); // Dev
 
-    mainWindow.on('ready-to-show', () => {
-        if (!mainWindow) {
+        mainWindow.on('ready-to-show', () => {
+            if (!mainWindow) {
               throw new Error('"mainWindow" is not defined');
-        }
-        if (process.env.START_MINIMIZED) {
+          }
+          if (process.env.START_MINIMIZED) {
               mainWindow.minimize();
-        } else {
+          } else {
               mainWindow.show();
-        }
-    });
+          }
+      });
 
-    mainWindow.on("closed", function () {
+        mainWindow.on("closed", function () {
             mainWindow = null;
-    });
+        });
 }
 
-if (app){ 
-    app.on("ready", createWindow);
+require("./index.js");
 
-    app.on("resize", function (e, x, y) {
-        mainWindow.setSize(x, y);
-    });
+electron.app.on('on', () =>{ 
+    createWindow();
 
-    app.on("window-all-closed", function () {
-        if (process.platform !== "darwin") {
-            app.quit();
+    electron.app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow();
         }
-    });
-}
+    })
+});
 
+electron.app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') 
+        electron.app.quit();
+});
