@@ -1,15 +1,15 @@
-import express from "express";
+const express = require("express");
+
+const utah_search = require("../controllers/UT/utah.controller.js");
+const weber_search = require('../controllers/UT/weber.controller.js');
+const davis_search = require('../controllers/UT/davis.controller.js');
+const summit_search = require('../controllers/UT/summit.controller.js');
 
 const route = express.Router();
 
-import { search as utah_search } from "../controllers/UT/utah.controller.js";
-import { search as weber_search } from '../controllers/UT/weber.controller.js';
-import { search as davis_search } from '../controllers/UT/davis.controller.js';
-import { search as summit_search } from '../controllers/UT/summit.controller.js';
+route.post("/utah", utah_search.search);
+route.post("/weber", weber_search.search);
+route.post("/davis", davis_search.search);
+route.post("/summit", summit_search.search);
 
-route.post("/utah", utah_search);
-route.post("/weber", weber_search);
-route.post("/davis", davis_search);
-route.post("/summit", summit_search);
-
-export default route;
+module.exports = route;

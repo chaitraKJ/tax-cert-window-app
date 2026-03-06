@@ -1,9 +1,9 @@
-import express from "express";
+const express = require("express");
+
+const { getCounty } = require("../controllers/misc.controller.js");
 
 const route = express.Router();
 
-import { getCounty } from "../controllers/misc.controller.js";
-
 route.get('/county', getCounty);
 
-export default route;
+module.exports = route;

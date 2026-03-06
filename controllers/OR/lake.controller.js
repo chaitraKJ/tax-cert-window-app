@@ -1,6 +1,6 @@
 //Author:Sanam Poojitha
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import PDFParser from "pdf2json";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const PDFParser = require("pdf2json");
 
 const parseDollar = (str) => {
     const numericString = str.replace(/[$,]/g, '').trim();
@@ -391,4 +391,4 @@ const search = async (req, res) => {
     }
 };
 
-export { search };
+module.exports = { search };

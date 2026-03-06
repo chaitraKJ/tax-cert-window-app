@@ -1,4 +1,3 @@
-
 const getCurrentDateTime = () =>{
 	const dateObj = new Date();
 	let year = dateObj.getFullYear();
@@ -23,4 +22,4 @@ const getCurrentDateTime = () =>{
 	return time;
 
 }
-export { getCurrentDateTime };
+module.exports = { getCurrentDateTime };

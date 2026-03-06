@@ -1,5 +1,5 @@
 //Author: Nithyananda R S
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 /* ═══════════════════════════════════════════════════════════════════════ */
 
@@ -472,4 +472,4 @@ const search = async (req, res) => {
     if (browserContext) await browserContext.close().catch(() => {});
   }
 };
-export { search };
+module.exports = { search };

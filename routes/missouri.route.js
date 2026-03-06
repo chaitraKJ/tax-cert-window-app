@@ -1,17 +1,17 @@
-import express from "express";
+const express = require("express");
 
-import { search as jefferson_search } from "../controllers/MO/jefferson.controller.js";
-import { search as st_louis_city_search } from "../controllers/MO/st.louis_city.controller.js";
-import { search as platte_search } from "../controllers/MO/platte.controller.js";
-import { search as st_louis_search } from "../controllers/MO/st.louis.controller.js";
-import { search as clay_search } from "../controllers/MO/clay.controller.js";
+const jefferson_search = require("../controllers/MO/jefferson.controller.js");
+const st_louis_city_search = require("../controllers/MO/st.louis_city.controller.js");
+const platte_search = require("../controllers/MO/platte.controller.js");
+const st_louis_search = require("../controllers/MO/st.louis.controller.js");
+const clay_search = require("../controllers/MO/clay.controller.js");
 
 const route = express.Router();
 
-route.post("/jefferson", jefferson_search);
-route.post("/st-louis-city", st_louis_city_search);
-route.post("/platte", platte_search);
-route.post("/st-louis", st_louis_search);
-route.post("/clay", clay_search);
+route.post("/jefferson", jefferson_search.search);
+route.post("/st-louis-city", st_louis_city_search.search);
+route.post("/platte", platte_search.search);
+route.post("/st-louis", st_louis_search.search);
+route.post("/clay", clay_search.search);
 
-export default route;
+module.exports = route;

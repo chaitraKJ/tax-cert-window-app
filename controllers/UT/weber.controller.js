@@ -1,6 +1,6 @@
 //Author :- Harsh Jha
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
 const ac_1 = async (page, url, account) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -408,6 +408,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
-
-
+module.exports = { search };

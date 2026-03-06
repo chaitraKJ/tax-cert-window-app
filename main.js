@@ -1,41 +1,51 @@
-import  { app, BrowserWindow } from "electron";
-import { updateElectronApp } from 'update-electron-app';
+const { app, BrowserWindow } = require('electron');
+const { updateElectronApp } = require('update-electron-app');
+// updateElectronApp();
 
-updateElectronApp();
-
-import "./index.js";
+require("./index.js");
 
 let mainWindow;
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 700,
-    webPreferences: {
-      nodeIntegration: true,
-    },
-  });
-  
-  mainWindow.loadURL("http://localhost:3000");
-  mainWindow.on("closed", function () {
-    mainWindow = null;
-  });
+    mainWindow = new BrowserWindow({
+            width: 1200,
+            height: 700,
+            webPreferences: {
+                nodeIntegration: true,
+        },
+    });
+
+    app.isPackaged
+        ? mainWindow.loadFile(path.join(__dirname, "views/order_search.html")) // Prod
+        : mainWindow.loadURL("http://localhost:3000"); // Dev
+
+    mainWindow.on('ready-to-show', () => {
+        if (!mainWindow) {
+              throw new Error('"mainWindow" is not defined');
+        }
+        if (process.env.START_MINIMIZED) {
+              mainWindow.minimize();
+        } else {
+              mainWindow.show();
+        }
+    });
+
+    mainWindow.on("closed", function () {
+            mainWindow = null;
+    });
 }
 
-app.on("ready", createWindow);
+if (app){ 
+    app.on("ready", createWindow);
 
-app.on("resize", function (e, x, y) {
-  mainWindow.setSize(x, y);
-});
+    app.on("resize", function (e, x, y) {
+        mainWindow.setSize(x, y);
+    });
 
-app.on("window-all-closed", function () {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+    app.on("window-all-closed", function () {
+        if (process.platform !== "darwin") {
+            app.quit();
+        }
+    });
+}
 
-app.on("activate", function () {
-  if (mainWindow === null) {
-    createWindow();
-  }
-});

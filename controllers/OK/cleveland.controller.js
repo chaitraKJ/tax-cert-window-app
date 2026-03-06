@@ -1,5 +1,5 @@
 //author:SANAM POOJITHA
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 const timeout_option = { timeout: 90000 };
 
 // STEP 1: Go to search page and find parcel
@@ -329,4 +329,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

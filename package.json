@@ -2,8 +2,8 @@
   "name": "Tax-cert-app",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
   "scripts": {
+    "dev": "node main.js",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",

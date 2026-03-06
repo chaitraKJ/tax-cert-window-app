@@ -1,11 +1,11 @@
-import express from "express";
+const express = require("express");
+
+const kent_search = require('../controllers/DE/kent.controller.js');
+const sussex_search = require('../controllers/DE/sussex.controller.js');
 
 const route = express.Router();
 
-import {search as kent_search} from '../controllers/DE/kent.controller.js';
-import {search as sussex_search} from '../controllers/DE/sussex.controller.js';
+route.post("/kent", kent_search.search);
+route.post("/sussex", sussex_search.search);
 
-route.post("/kent", kent_search);
-route.post("/sussex", sussex_search);
-
-export default route;
+module.exports = route;

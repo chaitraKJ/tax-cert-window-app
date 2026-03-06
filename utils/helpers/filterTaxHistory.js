@@ -1,4 +1,4 @@
-export function processTaxData(result) {
+function processTaxData(result) {
     const taxes = result.tax_history || [];
     if (taxes.length === 0) return result;
 
@@ -37,3 +37,5 @@ export function processTaxData(result) {
     result.tax_history = latestPaid;
     return result;
 }
+
+module.exports = processTaxData;

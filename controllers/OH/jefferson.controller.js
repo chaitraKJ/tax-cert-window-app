@@ -1,7 +1,6 @@
 //Author:Dhanush
-
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import { getOHCompanyYears } from "../../utils/configs/OH.config.js"; 
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js"); 
 const timeout_option = {
 	timeout: 90000
 };
@@ -701,6 +700,6 @@ const search = async (req, res) => {
 	}
 }
 
-export {
+module.exports = {
 	search
 }

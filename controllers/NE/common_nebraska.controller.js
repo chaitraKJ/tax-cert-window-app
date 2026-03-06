@@ -1,6 +1,5 @@
 //Author:Dhansuh
-
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 // Utility for checking if string is a real date (MM/DD/YYYY or M/D/YYYY)
 const isDate = (str) => {
@@ -558,4 +557,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

@@ -1,5 +1,5 @@
 // Author: Dhanush
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 //TIMEOUT 900000
 const timeout_option = {
@@ -645,4 +645,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

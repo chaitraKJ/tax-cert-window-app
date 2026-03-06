@@ -10,7 +10,7 @@ const companies = [
 ];
 
 
-export const getOHCompanyYears = (companyName) => {
+const getOHCompanyYears = (companyName) => {
   if (!companyName) return 1;
 
   const company = companies.find(
@@ -20,5 +20,4 @@ export const getOHCompanyYears = (companyName) => {
   return company?.noOfYearsWanted || 1;
 };
 
-export default companies;
-
+module.exports = getOHCompanyYears;

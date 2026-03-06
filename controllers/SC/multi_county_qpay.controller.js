@@ -1,45 +1,5 @@
 // Author: Nithyananda R S
-/**======================================================
-//PROCESSING TIME(COUNTY WISE)
-abbeville    | 054-00-00-424        → PASS [13721ms]
-allendale    | 119-01-00-017.02     → PASS [13696ms]
-bamberg      | 0013-00-00-017.      → PASS [13718ms]
-barnwell     | 111-00-00-154.02     → PASS [13098ms]
-calhoun      | 118-00-00-018        → PASS [11984ms]
-cherokee     | 101-00-00-098.000    → PASS [14802ms]
-chesterfield | 031 004 001 004      → PASS [12594ms]
-clarendon    | 090-00-03-057-01     → PASS [12998ms]
-colleton     | 115-00-00-237.001    → PASS [14398ms]
-darlington   | 056-03-03-020        → PASS [12395ms]
-dillon       | 104-12-12-005        → PASS [13403ms]
-edgefield    | 078-00-01-037-100    → PASS [14700ms]
-horry        | 0690001072           → PASS [15711ms]
-kershaw      | 338-01-00-004-SCK    → PASS [13177ms]
-lancaster    | 0042 -00-059.03      → PASS [14134ms]
-laurens      | 901-01-18-011        → PASS [12984ms]
-lee          | 023-00-00-286-000    → PASS [12289ms]
-lee          | 068-00-00-110-000    → PASS [12895ms]
-lexington    | 004493-01-010        → PASS [12712ms]
-lexington    | 010044-01-039        → PASS [13407ms]
-marlboro     | 013-00-03-132        → PASS [11679ms]
-mccormick    | 110-00-00-038.       → PASS [12617ms]
-newberry     | 641-18               → PASS [13699ms]
-oconee       | 134-00-07-004        → PASS [14297ms]
-orangeburg   | 03030001039000       → PASS [14182ms]
-saluda       | 114-00-00-034        → PASS [12604ms]
-sumter       | 2050404049           → PASS [12406ms]
-union        | 058-00-00-114 000    → PASS [12984ms]
-union        | 074-00-00-083 000    → PASS [11716ms]
-williamsburg | 45-035-067           → PASS [12390ms]
-spartanburg  | 7-13-09-120.01       → PASS [12689ms]
-
-======================================================================
-Total: 31 | PASS: 31 | FAIL: 0 | Avg: 13228ms
-======================================================================
-
-========================================================
-*/
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 // ====================================================
 // 1. COUNTY CONFIGURATION – ADD NEW COUNTIES HERE
@@ -1593,4 +1553,4 @@ const search = async (req, res) => {
     await closeBrowserContext(browserContext, mapNumber);
   }
 };
-export { search };
+module.exports = { search };

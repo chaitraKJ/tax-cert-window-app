@@ -1,6 +1,6 @@
 // Author: Sanam Poojitha
 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const logError = (scope, err) => {
     console.error(`[${scope}]`, err?.message || err);
@@ -527,4 +527,4 @@ const search = async (req, res) => {
     }
 };
 
-export { search };
+module.exports = { search };

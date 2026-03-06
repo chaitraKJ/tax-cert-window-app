@@ -1,9 +1,9 @@
-import express from "express";
+const express = require("express");
+
+const district_of_columbia_search = require("../controllers/DC/district_of_columbia.controller.js");
 
 const route = express.Router();
 
-import { search as district_of_columbia_search } from "../controllers/DC/district_of_columbia.controller.js";
+route.post("/district-of-columbia", district_of_columbia_search.search);
 
-route.post("/district-of-columbia", district_of_columbia_search);
-
-export default route;
+module.exports = route;

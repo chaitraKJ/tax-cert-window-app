@@ -1,6 +1,6 @@
 // author: dhanush
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import { getOHCompanyYears } from "../../utils/configs/OH.config.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js");
 
 const fultonConfig = {
   urlBase: "https://qpublic.schneidercorp.com/Application.aspx?AppID=1083&LayerID=26530&PageTypeID=4&PageID=10778&KeyValue=",
@@ -400,4 +400,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

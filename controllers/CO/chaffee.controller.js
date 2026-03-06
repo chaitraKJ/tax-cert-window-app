@@ -1,8 +1,7 @@
 // AUTHOR: MANJUNADH
-
 // Colorado Tax Scraper for ( Chaffee, cheyenne, custer, sedgwick, Yuma County )
 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 const timeout_option = { timeout: 90000 }; //Timeout for wait for selectors
 
 const COUNTIES = {
@@ -406,4 +405,4 @@ const search = async (req, res) => {
     }
   }
 };
-export { search };
+module.exports = { search };

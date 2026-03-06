@@ -1,7 +1,7 @@
 // AUTHOR: Nithyananda R S 
 // Modified: Optimized Mercer County scraper with client-specific early exits and improved payment mapping
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import { getOHCompanyYears } from "../../utils/configs/OH.config.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js");
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -559,4 +559,4 @@ const search = async (req, res) => {
     }
 };
 
-export { search };
+module.exports = { search };

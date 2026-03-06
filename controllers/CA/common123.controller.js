@@ -1,5 +1,5 @@
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import path from "path";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const path = require("path");
 
 const county_data = {
 	"monterey": "https://common3.mptsweb.com/mbc/monterey/tax/search",
@@ -460,6 +460,6 @@ const search = async (req, res) => {
 	}
 }
 
-export {
+module.exports = {
 	search
 }

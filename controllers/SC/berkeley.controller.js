@@ -1,6 +1,6 @@
 //Author: Nithyananda R S
 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 // ---------------------------
 // Configuration
@@ -293,7 +293,7 @@ const getTaxData = async (page, parcel) => {
 // ---------------------------
 // Express handler
 // ---------------------------
-export const search = async (req, res) => {
+const search = async (req, res) => {
     const { fetch_type = "api", account } = req.body || {};
     let context = null;
 
@@ -344,4 +344,4 @@ export const search = async (req, res) => {
     }
 };
 
-export default { search };
+module.exports = { search }

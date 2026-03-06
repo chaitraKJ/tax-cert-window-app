@@ -1,10 +1,7 @@
 // AUTHOR: MANJUNADH 
-
 // Ohio Tax Scraper for ( Meigs County )
-
-
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import { getOHCompanyYears } from "../../utils/configs/OH.config.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js");
 const timeout_option = { timeout: 120000 };
 
 // ────────────────────────────── UTILITIES ──────────────────────────────
@@ -513,4 +510,4 @@ const yearLimit = getOHCompanyYears(client);
   }
 };
 
-export { search };
+module.exports = { search };

@@ -1,5 +1,5 @@
 //author: Harsh jha
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 // Puppeteer timeout configuration
 const timeout_option = { timeout: 90000 };
@@ -334,4 +334,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

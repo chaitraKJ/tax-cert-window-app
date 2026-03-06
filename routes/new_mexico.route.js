@@ -1,9 +1,9 @@
-import express from "express";
+const express = require("express");
 
-import {search as bernalillo_search} from '../controllers/NM/bernalillo.controller.js'
+const bernalillo_search = require('../controllers/NM/bernalillo.controller.js');
 
 const route = express.Router(); 
 
-route.post("/bernalillo", bernalillo_search);
+route.post("/bernalillo", bernalillo_search.search);
 
-export default route;
+module.exports = route;

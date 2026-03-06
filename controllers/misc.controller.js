@@ -1,4 +1,4 @@
-import counties from "./county.js";
+const counties = require("./county.js");
 
 const getCounty = async (req, res) => {
 	const { state } = req.query;
@@ -30,6 +30,6 @@ const getCounty = async (req, res) => {
 	}
 }
 
-export {
+module.exports = {
 	getCounty
 };

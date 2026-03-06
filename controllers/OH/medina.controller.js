@@ -1,6 +1,6 @@
 // Author: Nithyananda R S 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import { getOHCompanyYears } from "../../utils/configs/OH.config.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js");
 
 // Helper functions
 const handleNotFound = (parcelNumber) => ({
@@ -344,7 +344,7 @@ const scrapePaymentHistory = async (page) => {
     }
 };
 
-export const search = async (req, res) => {
+const search = async (req, res) => {
     const { account, clientName, client, fetch_type } = req.body;
     const parcelNumber = account;
     const clientType = client || clientName || 'others';
@@ -671,3 +671,5 @@ export const search = async (req, res) => {
         return res.status(500).json({ error: true, message: error.message });
     }
 };
+
+module.exports = { search };

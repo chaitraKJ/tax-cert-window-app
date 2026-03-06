@@ -1,6 +1,6 @@
 //Author: Sanam Poojitha
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import { getOHCompanyYears } from "../../utils/configs/OH.config.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js");
 
 const applyTaxNotes = (data) => {
     const suffix = ", NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE 02/05 06/20";
@@ -365,4 +365,4 @@ const search = async (req, res) => {
     }
 };
 
-export { search };
+module.exports = { search };

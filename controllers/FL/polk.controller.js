@@ -1,10 +1,10 @@
 // Author: SANAM POOJITHA
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import { getOHCompanyYears } from "../../utils/configs/OH.config.js";
-import fs from "fs";
-import path from "path";
-import os from "os";
-import PDFParser from "pdf2json";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const PDFParser = require("pdf2json");
 
 const TIME = { NAVIGATE: 90000, SELECTOR: 30000 };
 
@@ -403,4 +403,4 @@ const search = async (req, res) => {
 };
 
 
-export { search };
+module.exports = { search };

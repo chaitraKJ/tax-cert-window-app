@@ -1,5 +1,5 @@
 // Author : Dhanush
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 // Helper function to clean text
 const clean = (s) => (s || "").toString().replace(/\s+/g, " ").trim();
@@ -583,4 +583,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

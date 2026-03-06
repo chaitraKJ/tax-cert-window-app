@@ -1,8 +1,8 @@
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
-import fs from "fs";
-import PDFParser from "pdf2json"; 
-import base64 from 'base64topdf';
+const fs = require("fs");
+const PDFParser = require("pdf2json");
+const base64 = require('base64topdf');
 
 const timeout_option = {
 	timeout: 90000
@@ -410,6 +410,6 @@ const search = async (req, res) => {
 	}
 }
 
-export {
+module.exports = {
 	search
 }

@@ -1,5 +1,5 @@
 // AUTHOR: DHANUSH
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const calculateTaxStatus = (taxHistory, currentDate = new Date()) => {
   return taxHistory.map((item) => {
@@ -436,4 +436,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

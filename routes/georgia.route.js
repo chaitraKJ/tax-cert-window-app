@@ -1,13 +1,13 @@
-import express from "express";
+const express = require("express");
 
-import { search as troup_search } from "../controllers/GA/troup.controller.js";
-import { search as glynn_search } from "../controllers/GA/glynn.controller.js";
-import { search as pickens_search } from "../controllers/GA/pickens.controller.js";
+const troup_search = require("../controllers/GA/troup.controller.js");
+const glynn_search = require("../controllers/GA/glynn.controller.js");
+const pickens_search = require("../controllers/GA/pickens.controller.js");
 
 const route = express.Router();
 
-route.post("/troup", troup_search);
-route.post("/glynn", glynn_search);
-route.post("/pickens",pickens_search);
+route.post("/troup", troup_search.search);
+route.post("/glynn", glynn_search.search);
+route.post("/pickens",pickens_search.search);
 
-export default route;
+module.exports = route;

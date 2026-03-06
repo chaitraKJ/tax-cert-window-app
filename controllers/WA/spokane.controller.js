@@ -1,6 +1,5 @@
 //Author -> Harsh Jha
-
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const utils = {
   getText: (selector) =>
@@ -22,7 +21,6 @@ const utils = {
   },
 };
 
-
 const extractParcelData = () => {
   const utils = {
     getText: (selector) =>
@@ -42,7 +40,6 @@ const extractParcelData = () => {
       );
     },
   };
-
 
   const data = {
     processed_date: new Date().toISOString().split("T")[0],
@@ -327,5 +324,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
-
+module.exports = { search };

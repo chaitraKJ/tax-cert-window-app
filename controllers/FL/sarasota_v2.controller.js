@@ -1,5 +1,5 @@
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-import get_client_years from "../../utils/configs/client.config.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const get_client_years = require("../../utils/configs/client.config.js");
 
 const timeout_option = {
 	timeout: 90000
@@ -524,6 +524,6 @@ const search = async (req, res) => {
 	}
 }
 
-export {
+module.exports = {
 	search
 }

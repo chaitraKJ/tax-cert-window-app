@@ -1,5 +1,5 @@
 //Author :- Nithyananda R S
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 // ====================================================
 // 1. CONFIGURATION
@@ -936,4 +936,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

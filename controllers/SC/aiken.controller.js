@@ -1,6 +1,6 @@
 //Author Nithyananda R S 
 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 // Helper function to handle cases where no records are found
 const handleNotFound = (parcelNumber, reason = "No tax records found for this parcel number.") => ({
@@ -547,4 +547,4 @@ const search = (req, res) => {
         });
 };
 
-export { search };
+module.exports = { search };

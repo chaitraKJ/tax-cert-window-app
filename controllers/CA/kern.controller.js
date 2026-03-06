@@ -1,7 +1,7 @@
 // //AUTHOR: DHANUSH
-// import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
-// import sharp from 'sharp';
-// import Tesseract from 'tesseract.js';
+// const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+// const sharp = require('sharp');
+// const Tesseract = require('tesseract.js');
 
 // const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // const timeout_option = { timeout: 90000 };
@@ -797,4 +797,4 @@
 //     }
 // }
 
-// export { search }; 
+// module.exports = { search }; 

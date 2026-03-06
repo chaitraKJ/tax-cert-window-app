@@ -1,5 +1,5 @@
 //Author:sanam Poojitha
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 const timeout_option = { timeout: 90000 };
 const applyTaxNotes = (data) => {
     const suffix =
@@ -193,15 +193,12 @@ const ac_2 = async (page, parcel) => {
     }
 };
 
-
-
 // Orchestrator
 const account_search = async (page, account) => {
     const parcel = await ac_1(page, account);
     const data = await ac_2(page, parcel);
     return data;
 };
-
 
 // Express API handler
 const search = async (req, res) => {
@@ -231,4 +228,4 @@ const search = async (req, res) => {
     }
 };
 
-export { search };
+module.exports = { search };

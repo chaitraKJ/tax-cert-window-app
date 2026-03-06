@@ -1,12 +1,12 @@
-import express from "express";
+const express = require("express");
 
-import { search as common_search } from "../controllers/HI/common_hawaii.controller.js";
+const common_search = require("../controllers/HI/common_hawaii.controller.js");
 
 const route = express.Router();
 
-route.post("/kauai", common_search);
-route.post("/maui",common_search);
-route.post("/honolulu",common_search);
-route.post("/hawaii",common_search);
+route.post("/kauai", common_search.search);
+route.post("/maui",common_search.search);
+route.post("/honolulu",common_search.search);
+route.post("/hawaii",common_search.search);
 
-export default route;
+module.exports = route;

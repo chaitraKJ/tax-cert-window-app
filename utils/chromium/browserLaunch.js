@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+const puppeteer = require("puppeteer");
 
 let instance = null;
 const getBrowserInstance = async () => {
@@ -18,4 +18,4 @@ const getBrowserInstance = async () => {
     return instance;
 }
 
-export default getBrowserInstance;
+module.exports = getBrowserInstance;

@@ -20,4 +20,4 @@ const get_client_years = (client) => {
 	}
 }
 
-export default get_client_years;
+module.exports = get_client_years;

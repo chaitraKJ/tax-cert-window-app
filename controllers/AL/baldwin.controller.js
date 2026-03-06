@@ -1,4 +1,4 @@
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const county_url = {
 	"alabama" : "https://baldwinproperty.countygovservices.com/Property/Search",
@@ -342,6 +342,6 @@ const search = async (req, res) => {
 	}
 }
 
-export { 
+module.exports = { 
 	search
 };

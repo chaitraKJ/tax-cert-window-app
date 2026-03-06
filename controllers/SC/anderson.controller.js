@@ -1,5 +1,5 @@
 //Author:- Nithyananda R S
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const CONFIG = {
   DISCLAIMER_URL: "https://acpass.andersoncountysc.org/loginreg3/login.php",
@@ -1110,4 +1110,4 @@ const search = async (req, res) => {
   }
 };
 
-export { search };
+module.exports = { search };

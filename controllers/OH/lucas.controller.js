@@ -1,5 +1,6 @@
 // Author: Nithyananda R S 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const { getOHCompanyYears } = require("../../utils/configs/OH.config.js");
 
 const handleNotFound = (parcelNumber) => {
     return {
@@ -30,6 +31,12 @@ const isDatePassed = (dateString) => {
 };
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const formatCurrency = (str) => {
+    if (!str) return "$0.00";
+    const num = Math.abs(parseFloat(str.toString().replace(/[^0-9.-]+/g, "")));
+    return Number.isFinite(num) ? `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00";
+};
 
 // === BULLETPROOF: Click Summary Tab ===
 const clickSummaryTab = async (page) => {
@@ -373,9 +380,11 @@ const scrapePriorTaxes = async (page) => {
 };
 
 // === MAIN: FINAL MERGE WITH ANNUAL/SEMI-ANNUAL DETECTION ===
-const getTaxData = async (page, parcelNumber) => {
+const getTaxData = async (page, parcelNumber, clientType) => {
     try {
         await performSearch(page, parcelNumber);
+
+        const normalizedClientType = (clientType || 'default').toLowerCase();
 
         // Final recovery
         let hasSummary = false;
@@ -438,28 +447,55 @@ const getTaxData = async (page, parcelNumber) => {
             const paidAmount2H = (typeof payment2H.amount === 'number' && !isNaN(payment2H.amount)) ? payment2H.amount : 0;
 
             // ✅ Determine if Annual or Semi-Annual based on paid dates
-            const isSameDate = paidDate1H && paidDate2H && paidDate1H === paidDate2H;
+        const isSameDate = paidDate1H && paidDate2H && paidDate1H === paidDate2H;
 
-            if (isSameDate) {
-                // ✅ ANNUAL PAYMENT (one entry)
-                const base = (parseFloat(first?.base_amount?.replace(/[^0-9.-]+/g, '') || '0')) + 
-                             (parseFloat(second?.base_amount?.replace(/[^0-9.-]+/g, '') || '0'));
-                const paidTotal = paidAmount1H + paidAmount2H;
-                const due = (parseFloat(first?.amount_due?.replace(/[^0-9.-]+/g, '') || '0')) + 
-                            (parseFloat(second?.amount_due?.replace(/[^0-9.-]+/g, '') || '0'));
+        if (isSameDate) {
+            // ✅ ANNUAL PAYMENT (one entry)
+            const base = (parseFloat(first?.base_amount?.replace(/[^0-9.-]+/g, '') || '0')) + 
+                         (parseFloat(second?.base_amount?.replace(/[^0-9.-]+/g, '') || '0'));
+            const paidTotal = paidAmount1H + paidAmount2H;
+            const due = (parseFloat(first?.amount_due?.replace(/[^0-9.-]+/g, '') || '0')) + 
+                        (parseFloat(second?.amount_due?.replace(/[^0-9.-]+/g, '') || '0'));
 
-                const status = due === 0 ? "Paid" : (isDatePassed(delqDate) ? "Delinquent" : "Due");
+            const status = due === 0 ? "Paid" : (isDatePassed(delqDate) ? "Delinquent" : "Due");
+
+            fullHistory.push({
+                jurisdiction: "County",
+                year,
+                status,
+                payment_type: "Annual",
+                half_designation: "Annual",
+                base_amount: formatCurrency(base),
+                amount_paid: formatCurrency(paidTotal),
+                amount_due: formatCurrency(due),
+                paid_date: paidDate1H || paidDate2H || "",
+                due_date: dueDate,
+                delq_date: delqDate,
+                land_value: valuations.land_value,
+                improvements: valuations.improvements,
+                total_assessed_value: valuations.total_assessed_value,
+                receipt_number: "N/A"
+            });
+
+        } else {
+            // ✅ SEMI-ANNUAL PAYMENT (two separate entries)
+            
+            // First Half
+            if (first) {
+                const base1H = parseFloat(first.base_amount.replace(/[^0-9.-]+/g, '')) || 0;
+                const due1H = parseFloat(first.amount_due.replace(/[^0-9.-]+/g, '')) || 0;
+                const status1H = due1H === 0 ? "Paid" : (isDatePassed(delqDate) ? "Delinquent" : "Due");
 
                 fullHistory.push({
                     jurisdiction: "County",
                     year,
-                    status,
-                    payment_type: "Annual",
-                    half_designation: "Annual",
-                    base_amount: `$${base.toFixed(2)}`,
-                    amount_paid: `$${paidTotal.toFixed(2)}`,
-                    amount_due: `$${due.toFixed(2)}`,
-                    paid_date: paidDate1H || paidDate2H || "",
+                    status: status1H,
+                    payment_type: "Semi-Annual",
+                    half_designation: "First Half",
+                    base_amount: formatCurrency(base1H),
+                    amount_paid: formatCurrency(paidAmount1H),
+                    amount_due: formatCurrency(due1H),
+                    paid_date: paidDate1H || "",
                     due_date: dueDate,
                     delq_date: delqDate,
                     land_value: valuations.land_value,
@@ -467,95 +503,88 @@ const getTaxData = async (page, parcelNumber) => {
                     total_assessed_value: valuations.total_assessed_value,
                     receipt_number: "N/A"
                 });
-
-            } else {
-                // ✅ SEMI-ANNUAL PAYMENT (two separate entries)
-                
-                // First Half
-                if (first) {
-                    const base1H = parseFloat(first.base_amount.replace(/[^0-9.-]+/g, '')) || 0;
-                    const due1H = parseFloat(first.amount_due.replace(/[^0-9.-]+/g, '')) || 0;
-                    const status1H = due1H === 0 ? "Paid" : (isDatePassed(delqDate) ? "Delinquent" : "Due");
-
-                    fullHistory.push({
-                        jurisdiction: "County",
-                        year,
-                        status: status1H,
-                        payment_type: "Semi-Annual",
-                        half_designation: "First Half",
-                        base_amount: `$${base1H.toFixed(2)}`,
-                        amount_paid: `$${paidAmount1H.toFixed(2)}`,
-                        amount_due: `$${due1H.toFixed(2)}`,
-                        paid_date: paidDate1H || "",
-                        due_date: dueDate,
-                        delq_date: delqDate,
-                        land_value: valuations.land_value,
-                        improvements: valuations.improvements,
-                        total_assessed_value: valuations.total_assessed_value,
-                        receipt_number: "N/A"
-                    });
-                }
-
-                // Second Half
-                if (second) {
-                    const base2H = parseFloat(second.base_amount.replace(/[^0-9.-]+/g, '')) || 0;
-                    const due2H = parseFloat(second.amount_due.replace(/[^0-9.-]+/g, '')) || 0;
-                    const status2H = due2H === 0 ? "Paid" : (isDatePassed(delqDate) ? "Delinquent" : "Due");
-
-                    fullHistory.push({
-                        jurisdiction: "County",
-                        year,
-                        status: status2H,
-                        payment_type: "Semi-Annual",
-                        half_designation: "Second Half",
-                        base_amount: `$${base2H.toFixed(2)}`,
-                        amount_paid: `$${paidAmount2H.toFixed(2)}`,
-                        amount_due: `$${due2H.toFixed(2)}`,
-                        paid_date: paidDate2H || "",
-                        due_date: dueDate,
-                        delq_date: delqDate,
-                        land_value: valuations.land_value,
-                        improvements: valuations.improvements,
-                        total_assessed_value: valuations.total_assessed_value,
-                        receipt_number: "N/A"
-                    });
-                }
             }
-        });
 
-        fullHistory.sort((a, b) => {
-            const yearDiff = parseInt(a.year) - parseInt(b.year);
-            if (yearDiff !== 0) return yearDiff;
-            // Within same year, First Half before Second Half
-            if (a.half_designation === "First Half") return -1;
-            if (b.half_designation === "First Half") return 1;
-            return 0;
-        });
+            // Second Half
+            if (second) {
+                const base2H = parseFloat(second.base_amount.replace(/[^0-9.-]+/g, '')) || 0;
+                const due2H = parseFloat(second.amount_due.replace(/[^0-9.-]+/g, '')) || 0;
+                const status2H = due2H === 0 ? "Paid" : (isDatePassed(delqDate) ? "Delinquent" : "Due");
 
-        const currentRec = fullHistory.find(r => r.year === (new Date().getFullYear() - 1).toString());
-        const priorStatus = fullHistory.filter(r => parseInt(r.year) < (new Date().getFullYear() - 1)).some(r => r.status === "Delinquent") ? "PRIORS ARE DELINQUENT" : "ALL PRIORS ARE PAID";
-        const currentStatus = currentRec?.status || "PAID";
-        const paymentTypeNote = currentRec?.payment_type === "Annual" ? "ANNUAL" : "SEMI-ANNUAL";
-        const notes = `${priorStatus}, ${currentRec?.year || ''} TAXES ARE ${currentStatus.toUpperCase()}, PAYMENT TYPE: ${paymentTypeNote}, DUE DATE IS 02/01`;
+                fullHistory.push({
+                    jurisdiction: "County",
+                    year,
+                    status: status2H,
+                    payment_type: "Semi-Annual",
+                    half_designation: "Second Half",
+                    base_amount: formatCurrency(base2H),
+                    amount_paid: formatCurrency(paidAmount2H),
+                    amount_due: formatCurrency(due2H),
+                    paid_date: paidDate2H || "",
+                    due_date: dueDate,
+                    delq_date: delqDate,
+                    land_value: valuations.land_value,
+                    improvements: valuations.improvements,
+                    total_assessed_value: valuations.total_assessed_value,
+                    receipt_number: "N/A"
+                });
+            }
+        }
+    });
 
-        const delinquencyStatus = fullHistory.some(r => r.status === "Delinquent") ? "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF" : "NONE";
+    fullHistory.sort((a, b) => {
+        const yearDiff = parseInt(b.year) - parseInt(a.year);
+        if (yearDiff !== 0) return yearDiff;
+        if (a.half_designation === "First Half") return -1;
+        if (b.half_designation === "First Half") return 1;
+        return 0;
+    });
 
-        return {
-            processed_date: new Date().toISOString().split('T')[0],
-            owner_name: [ownerInfo.owner_name],
-            property_address: ownerInfo.property_address,
-            owner_address: ownerInfo.owner_address,
-            parcel_number: parcelNumber,
-            land_value: valuations.land_value,
-            improvements: valuations.improvements,
-            total_assessed_value: valuations.total_assessed_value,
-            exemption: "$0.00",
-            total_taxable_value: valuations.total_assessed_value,
-            taxing_authority: "Lucas County Treasurer, Toledo, OH 43601",
-            notes,
-            delinquent: delinquencyStatus,
-            tax_history: fullHistory
-        };
+    // Client-type history truncation using config
+    const noOfYearsWanted = getOHCompanyYears(clientType);
+    let yearsProcessed = 0;
+    let foundUnpaid = false;
+    const truncatedHistory = [];
+    for (const entry of fullHistory) {
+        truncatedHistory.push(entry);
+        // Only count full years (Annual or Second Half)
+        if (entry.half_designation === "Annual" || entry.half_designation === "Second Half") {
+            yearsProcessed++;
+            if (entry.status === "Delinquent" || entry.status === "Due") {
+                foundUnpaid = true;
+            }
+            if (yearsProcessed >= noOfYearsWanted && !foundUnpaid) {
+                break;
+            }
+        }
+        if (foundUnpaid && entry.status === "Paid") break;
+    }
+    const finalHistory = truncatedHistory;
+
+    const currentRec = finalHistory.find(r => r.year === (new Date().getFullYear() - 1).toString());
+    const priorStatus = finalHistory.filter(r => parseInt(r.year) < (new Date().getFullYear() - 1)).some(r => r.status === "Delinquent") ? "PRIORS ARE DELINQUENT" : "ALL PRIORS ARE PAID";
+    const currentStatus = currentRec?.status || "PAID";
+    const paymentTypeNote = currentRec?.payment_type === "Annual" ? "ANNUAL" : "SEMI-ANNUAL";
+    const notes = `${priorStatus}, ${currentRec?.year || ''} TAXES ARE ${currentStatus.toUpperCase()}, PAYMENT TYPE: ${paymentTypeNote}, DUE DATE IS 02/01`;
+
+    const delinquencyStatus = finalHistory.some(r => r.status === "Delinquent") ? "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF" : "NONE";
+
+    return {
+        processed_date: new Date().toISOString().split('T')[0],
+        owner_name: [ownerInfo.owner_name],
+        property_address: ownerInfo.property_address,
+        owner_address: ownerInfo.owner_address,
+        parcel_number: parcelNumber,
+        land_value: valuations.land_value,
+        improvements: valuations.improvements,
+        total_assessed_value: valuations.total_assessed_value,
+        exemption: "$0.00",
+        total_taxable_value: valuations.total_assessed_value,
+        taxing_authority: "Lucas County Treasurer, Toledo, OH 43601",
+        notes,
+        delinquent: delinquencyStatus,
+        tax_history: finalHistory
+    };
 
     } catch (err) {
         console.error(`[ERROR] Failed to scrape parcel ${parcelNumber}:`, err.message);
@@ -565,7 +594,8 @@ const getTaxData = async (page, parcelNumber) => {
 
 // === API Handler ===
 const search = async (req, res) => {
-    const { fetch_type, account } = req.body;
+    const { fetch_type, account, clientName, selectedClientType } = req.body;
+    const clientType = selectedClientType || clientName || 'others';
     if (!fetch_type || !["html", "api"].includes(fetch_type)) return res.status(400).send("Invalid request type.");
     if (!account) return res.status(400).send("Parcel number is required.");
 
@@ -582,7 +612,7 @@ const search = async (req, res) => {
             else reqInt.continue();
         });
 
-        const data = await getTaxData(page, account);
+        const data = await getTaxData(page, account, clientType);
         if (fetch_type === "html") res.status(200).render("parcel_data_official", data);
         else res.status(200).json({ result: data });
     } catch (error) {
@@ -595,4 +625,4 @@ const search = async (req, res) => {
     }
 };
 
-export { search };
+module.exports = { search }

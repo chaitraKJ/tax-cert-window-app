@@ -5275,4 +5275,4 @@ const counties = [
   }
 ];
 
-export default counties;
+module.exports = counties;

@@ -1,5 +1,5 @@
 //Author- Nithyananda R S 
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const handleNotFound = (parcelNumber) => ({
     processed_date: new Date().toISOString().split('T')[0],
@@ -590,4 +590,4 @@ const search = (req, res) => {
         });
 };
 
-export { search };
+module.exports = { search };

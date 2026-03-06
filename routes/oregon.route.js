@@ -1,30 +1,30 @@
-import express from "express";
+const express = require("express");
 
-import { search as common_search } from "../controllers/OR/commonOR.controller.js";
-import { search as deschutes_search } from "../controllers/OR/deschutes.controller.js";
-import { search as lake_search } from "../controllers/OR/lake.controller.js";
-import { search as lane_search } from "../controllers/OR/lane.controller.js";
-import { search as multnomah_search } from "../controllers/OR/multnomah.controller.js";
-import { search as clatsop_search } from "../controllers/OR/clatsop.controller.js";
-import { search as clackamas_search } from "../controllers/OR/clackamas.controller.js";
-import { search as washington_search } from "../controllers/OR/washington.controller.js";
-import { search as benton_search } from "../controllers/OR/benton.controller.js";
-import { search as klamath_search } from "../controllers/OR/klamath.controller.js";
+const common_search = require("../controllers/OR/commonOR.controller.js");
+const deschutes_search = require("../controllers/OR/deschutes.controller.js");
+const lake_search = require("../controllers/OR/lake.controller.js");
+const lane_search = require("../controllers/OR/lane.controller.js");
+const multnomah_search = require("../controllers/OR/multnomah.controller.js");
+const clatsop_search = require("../controllers/OR/clatsop.controller.js");
+const clackamas_search = require("../controllers/OR/clackamas.controller.js");
+const washington_search = require("../controllers/OR/washington.controller.js");
+const benton_search = require("../controllers/OR/benton.controller.js");
+const klamath_search = require("../controllers/OR/klamath.controller.js");
 
 const route = express.Router();
 
-route.post("/jackson", common_search);
-route.post("/jefferson", common_search);
-route.post("/linn", common_search);
+route.post("/jackson", common_search.search);
+route.post("/jefferson", common_search.search);
+route.post("/linn", common_search.search);
 
-route.post("/deschutes", deschutes_search);
-route.post("/lake", lake_search);
-route.post("/lane", lane_search);
-route.post("/multnomah", multnomah_search);
-route.post("/clatsop", clatsop_search);
-route.post("/clackamas", clackamas_search);
-route.post("/washington", washington_search);
-route.post("/benton", benton_search);
-route.post("/klamath", klamath_search);
+route.post("/deschutes", deschutes_search.search);
+route.post("/lake", lake_search.search);
+route.post("/lane", lane_search.search);
+route.post("/multnomah", multnomah_search.search);
+route.post("/clatsop", clatsop_search.search);
+route.post("/clackamas", clackamas_search.search);
+route.post("/washington", washington_search.search);
+route.post("/benton", benton_search.search);
+route.post("/klamath", klamath_search.search);
 
-export default route;
+module.exports = route;

@@ -1,16 +1,16 @@
-import express from "express";
+const express = require("express");
 
-import { search as douglas_search } from "../controllers/NV/douglas_lyon.controller.js";
-import { search as common_search } from "../controllers/NV/common_nevada.controller.js";
-import { search as washoe_search } from "../controllers/NV/washoe.controller.js";
+const douglas_search = require("../controllers/NV/douglas_lyon.controller.js");
+const common_search = require("../controllers/NV/common_nevada.controller.js");
+const washoe_search = require("../controllers/NV/washoe.controller.js");
 
 const route = express.Router();
 
-route.post("/douglas", douglas_search);
-route.post("/lyon", douglas_search);
-route.post("/carson-city",common_search);
-route.post("/nye",common_search);
-route.post("/churchill",common_search);
-route.post("/washoe", washoe_search);
+route.post("/douglas", douglas_search.search);
+route.post("/lyon", douglas_search.search);
+route.post("/carson-city",common_search.search);
+route.post("/nye",common_search.search);
+route.post("/churchill",common_search.search);
+route.post("/washoe", washoe_search.search);
 
-export default route;
+module.exports = route;

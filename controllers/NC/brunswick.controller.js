@@ -1,8 +1,7 @@
 // Author: Sanam Poojitha
-import getBrowserInstance from "../../utils/chromium/browserLaunch.js";
+const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const timeout_option = { timeout: 90000 };
-
 
 const applyTaxNotes = (data) => {
     const suffix = ", NORMALLY TAXES ARE PAID ANNUALLY, NORMAL DUE AND DELQ DATES ARE 09/01 01/05, CITY TAX NEED TO CONFIRM";
@@ -284,4 +283,4 @@ const search = async (req, res) => {
     }
 };
 
-export { search };
+module.exports = { search };
