@@ -1,7 +1,7 @@
 {
   "name": "Tax-cert-app",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "dev": "electron .",
     "start": "electron-forge start",
@@ -11,7 +11,7 @@
   },
   "author": "Chaitra",
   "license": "ISC",
-  "description": "Auto Tax Certificate Generator",
+  "description": "Tax Certificate Generator",
   "dependencies": {
     "base64topdf": "^1.1.8",
     "bcryptjs": "^3.0.2",
