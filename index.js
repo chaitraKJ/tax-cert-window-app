@@ -12,7 +12,9 @@ dotenv.config();
 const apps = express();
 
 apps.engine('.html', ejs.__express);
-apps.use(express.static('public'));
+// apps.use(express.static('public'));
+apps.use(express.static(path.join(__dirname, 'public')));
+apps.set('views', path.join(__dirname, 'views'));
 apps.set('view engine', 'html');
 
 const misc_router = require("./routes/misc.route.js");

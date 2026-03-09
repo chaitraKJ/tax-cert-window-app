@@ -3,6 +3,7 @@ const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 const fs = require("fs");
 const PDFParser = require("pdf2json");
 const base64 = require('base64topdf');
+const path = require("node:path");
 
 const timeout_option = {
 	timeout: 90000
@@ -213,17 +214,18 @@ const ac_2 = async (page, main_data, account) => {
 			const account = main_data['parcel_number'];
 			const url = `https://wps.sdttc.com/webapi/api/billTemplates?merchantName=CoSDTreasurer2&billType=Secured&id1=${account}`;
 			const file_name = Date.now() + "-" + account;
-			const path = `./pdfs/${file_name}.pdf`;
+			// const path = `./pdfs/${file_name}.pdf`;
+			const file_path = path.join(__dirname, `pdfs/sample.pdf`);
 
 			fetch(url, { method: "GET", headers: { "Accept": "application/octet-stream" } })
 			.then((res) => res.arrayBuffer())
 			.then(data => {
 				var base64Str = Buffer.from(data).toString('base64');
-				base64.base64Decode(base64Str, path);
+				base64.base64Decode(base64Str, file_path);
 			})
 			.then(() => {
 				const pdfParser = new PDFParser();
-				pdfParser.loadPDF(path);
+				pdfParser.loadPDF(file_path);
 
 				pdfParser.on("pdfParser_dataError", (errData) =>{
 					console.error(errData.parserError);
@@ -271,11 +273,11 @@ const ac_2 = async (page, main_data, account) => {
 					});
 
 					// DELETE THE PDF FILE
-					fs.unlink(path, err => {
+					fs.unlink(file_path, err => {
 						if (err) {
 							console.log(`An error occurred ${err.message}`);
 						} else {
-							console.log(`Deleted the file under ${path}`);
+							console.log(`Deleted the file under ${file_path}`);
 						}
 					});
 
