@@ -13,29 +13,59 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: true,
         },
-    });  
+    }); 
 
-    electron.dialog.showOpenDialog(mainWindow, {
-        properties: ['openFile'],
-        filters: [  
-            { name: 'All Files', extensions: ['*'] }
-        ]
-    }).then(result => {
-        let is_cancelled = result.canceled;
-        let filePaths = result.filePaths;
-
-        if(is_cancelled || filePaths.length == 0){
-            electron.app.quit();
+    let local_file_path = path.join(electron.app.getPath('userData'), 'chrome_file_path.txt');
+    if(fs.existsSync(local_file_path)) {
+        const data = fs.readFileSync(local_file_path, 'utf-8');
+        if(data != ""){
+            mainWindow.loadURL("http://localhost:3000");
         }
         else{
-            let chrome_file_path = filePaths[0];
-            let local_file_path = path.join(electron.app.getPath('userData'), 'chrome_file_path.txt');
-            fs.writeFileSync(local_file_path, chrome_file_path, 'utf-8');
-            mainWindow.loadURL("http://localhost:3000");
-        }        
-    }).catch(err => {
-        console.log(err);
-    });
+            electron.dialog.showOpenDialog(mainWindow, {
+                properties: ['openFile'],
+                filters: [  
+                    { name: 'All Files', extensions: ['*'] }
+                ]
+            }).then(result => {
+                let is_cancelled = result.canceled;
+                let filePaths = result.filePaths;
+
+                if(is_cancelled || filePaths.length == 0){
+                    electron.app.quit();
+                }
+                else{
+                    let chrome_file_path = filePaths[0];               
+                    fs.writeFileSync(local_file_path, chrome_file_path, 'utf-8');
+                    mainWindow.loadURL("http://localhost:3000");
+                }        
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    }
+    else{
+        electron.dialog.showOpenDialog(mainWindow, {
+            properties: ['openFile'],
+            filters: [  
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        }).then(result => {
+            let is_cancelled = result.canceled;
+            let filePaths = result.filePaths;
+
+            if(is_cancelled || filePaths.length == 0){
+                electron.app.quit();
+            }
+            else{
+                let chrome_file_path = filePaths[0];               
+                fs.writeFileSync(local_file_path, chrome_file_path, 'utf-8');
+                mainWindow.loadURL("http://localhost:3000");
+            }        
+        }).catch(err => {
+            console.log(err);
+        });
+    }
 
     // electron.app.isPackaged
     //     ? mainWindow.loadFile(path.join(__dirname, "views/order_search.html")) // Prod
