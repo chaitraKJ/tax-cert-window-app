@@ -4,6 +4,7 @@ const fs = require("fs");
 const PDFParser = require("pdf2json");
 const base64 = require('base64topdf');
 const path = require("node:path");
+const electron = require('electron');
 
 const timeout_option = {
 	timeout: 90000
@@ -215,7 +216,7 @@ const ac_2 = async (page, main_data, account) => {
 			const url = `https://wps.sdttc.com/webapi/api/billTemplates?merchantName=CoSDTreasurer2&billType=Secured&id1=${account}`;
 			const file_name = Date.now() + "-" + account;
 			// const path = `./pdfs/${file_name}.pdf`;
-			const file_path = path.join(__dirname, `pdfs/sample.pdf`);
+			let file_path = path.join(electron.app.getPath('userData'), `${file_name}.pdf`);
 
 			fetch(url, { method: "GET", headers: { "Accept": "application/octet-stream" } })
 			.then((res) => res.arrayBuffer())

@@ -5,7 +5,7 @@ const ejs = require("ejs");
 const path = require("node:path");
 const cors = require("cors");
 
-const getBrowserInstance = require("./utils/chromium/browserLaunch.js");
+// const getBrowserInstance = require("./utils/chromium/browserLaunch.js");
 
 dotenv.config();
 
@@ -80,7 +80,7 @@ apps.get("*", (req, res) => { res.render('page_not_found'); });
 const PORT = process.env.PORT | 3000;
 apps.listen(PORT, async () => {
     try{
-        await getBrowserInstance();
+        // await getBrowserInstance();
         console.log("Browser launched");
         console.log("Server is listening on PORT: "+PORT);
     }
