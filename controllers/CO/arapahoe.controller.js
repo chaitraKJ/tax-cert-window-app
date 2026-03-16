@@ -3,56 +3,82 @@ const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const timeout_option = { timeout: 90000 };
 function TaxNotes(data) {
+
     if (!data.tax_history || data.tax_history.length === 0) {
         data.notes =
-            "ALL PRIORS ARE PAID, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE N/A";
+            "ALL PRIORS ARE PAID, NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE 03/02 & 06/15 FOR SEMI-ANNUAL, 04/30 FOR ANNUAL";
         data.delinquent = "NONE";
         return data;
     }
 
     data.tax_history.sort((a, b) => Number(a.year) - Number(b.year));
 
-    const latest = data.tax_history[data.tax_history.length - 1];
-    const latestYear = latest.year;
-    const latestStatus = latest.status;
+    const latestYear = data.tax_history[data.tax_history.length - 1].year;
+
+    const latestYearRecords = data.tax_history.filter(
+        r => Number(r.year) === Number(latestYear)
+    );
+
+    const firstHalf = latestYearRecords[0];
+    const secondHalf = latestYearRecords[1];
+
+    const firstStatus = firstHalf?.status || "Unknown";
+    const secondStatus = secondHalf?.status || "Unknown";
+
     const priorDelq = data.tax_history
-        .slice(0, -1)
+        .filter(r => Number(r.year) !== Number(latestYear))
         .some(r => r.status === "Delinquent");
 
-    const firstDue = data.tax_history[0]?.due_date || "";
-    const secondDue = data.tax_history[1]?.due_date || "";
-    const fullDue = data.full_due_date || "";
     const NOTE =
-        `, NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE 03/02 & 06/15 FOR SEMI-ANNUAL, 04/30 FOR ANNUAL`;
+        ", NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE 03/02 & 06/15 FOR SEMI-ANNUAL, 04/30 FOR ANNUAL";
 
-    if (latestStatus === "Paid") {
-        data.notes = priorDelq
-            ? `PRIORS ARE DELINQUENT, ${latestYear} TAXES ARE PAID${NOTE}`
-            : `ALL PRIORS ARE PAID, ${latestYear} TAXES ARE PAID${NOTE}`;
+    // ---------- NOTES LOGIC ----------
+
+    if (firstStatus === "Paid" && secondStatus === "Due") {
+
+        data.notes =
+            `ALL PRIORS ARE PAID, IN ${latestYear} TAXES 1ST INSTALLMENT IS PAID AND 2ND INSTALLMENT IS DUE${NOTE}`;
         data.delinquent = priorDelq
             ? "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF"
             : "NONE";
-        return data;
+
     }
 
-    if (latestStatus === "Due" || latestStatus === "Unpaid") {
-        data.notes = priorDelq
-            ? `PRIORS ARE DELINQUENT, ${latestYear} TAXES ARE DUE${NOTE}`
-            : `ALL PRIORS ARE PAID, ${latestYear} TAXES ARE DUE${NOTE}`;
-        data.delinquent = "NONE";
-        return data;
+    else if (firstStatus === "Paid" && secondStatus === "Paid") {
+
+        data.notes =
+            `ALL PRIORS ARE PAID, IN ${latestYear} TAXES ARE PAID${NOTE}`;
+        data.delinquent = priorDelq
+            ? "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF"
+            : "NONE";
+
     }
 
-    if (latestStatus === "Delinquent") {
-        data.notes = priorDelq
-            ? `PRIORS ARE DELINQUENT, ${latestYear} TAXES ARE ALSO DELINQUENT${NOTE}`
-            : `PRIOR YEAR TAXES ARE PAID, ${latestYear} TAXES ARE DELINQUENT${NOTE}`;
+    else if (firstStatus === "Due" && secondStatus === "Due") {
+
+        data.notes =
+            `ALL PRIORS ARE PAID, IN ${latestYear} TAXES ARE DUE${NOTE}`;
+        data.delinquent = priorDelq
+            ? "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF"
+            : "NONE";
+
+    }
+
+    else if (firstStatus === "Delinquent" || secondStatus === "Delinquent") {
+
+        data.notes =
+            `ALL PRIORS ARE PAID, IN ${latestYear} TAXES ARE DELINQUENT${NOTE}`;
         data.delinquent = "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF";
-        return data;
+
     }
 
-    data.notes = `${latestYear} TAX STATUS UNKNOWN${NOTE}`;
-    data.delinquent = "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF";
+    else {
+
+        data.notes = `${latestYear} TAX STATUS UNKNOWN${NOTE}`;
+        data.delinquent = "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF";
+
+    }
+
     return data;
 }
 // -----------------------------------------
@@ -130,27 +156,49 @@ const assessed = await page.evaluate(() => {
 });
 
         // --- Tax Amounts ---
-        const tax = await page.evaluate(() => {
-            const clean = v => Number(v.replace(/[^0-9.-]/g, "")) || 0;
-            const get = id => document.querySelector(id)?.innerText.trim() || "0";
-            return {
-                first_half: {
-                    base: clean(get("#ContentPlaceHolder1_lblFirstAssmtTax")),
-                    paid: clean(get("#ContentPlaceHolder1_lblFirstPayment")),
-                    due: clean(get("#ContentPlaceHolder1_lblTax1st"))
-                },
-                second_half: {
-                    base: clean(get("#ContentPlaceHolder1_lblSecondAssmtTax")),
-                    paid: clean(get("#ContentPlaceHolder1_lblSecondPayment")),
-                    due: clean(get("#ContentPlaceHolder1_lblTax2nd"))
-                },
-                full_payment: {
-                    base: clean(get("#ContentPlaceHolder1_lblOrigTaxAmt")),
-                    paid: clean(get("#ContentPlaceHolder1_lblPaidTotal")),
-                    due: clean(get("#ContentPlaceHolder1_lblTaxFull"))
-                }
-            };
-        });
+const tax = await page.evaluate(() => {
+
+    const clean = v => Number(v.replace(/[^0-9.-]/g, "")) || 0;
+    const get = id => document.querySelector(id)?.innerText.trim() || "0";
+
+    const first_assessed = clean(get("#ContentPlaceHolder1_lblFirstAssmtTax"));
+    const second_assessed = clean(get("#ContentPlaceHolder1_lblSecondAssmtTax"));
+
+    const first_special = clean(get("#ContentPlaceHolder1_lblFirstSPASS"));
+    const second_special = clean(get("#ContentPlaceHolder1_lblSecondSPASS"));
+
+    const first_fee = clean(get("#ContentPlaceHolder1_lblFirstFee"));
+    const second_fee = clean(get("#ContentPlaceHolder1_lblSecondFee"));
+
+    const first_interest = clean(get("#ContentPlaceHolder1_lblFirstInterest"));
+    const second_interest = clean(get("#ContentPlaceHolder1_lblSecondInterest"));
+
+    return {
+
+        first_half: {
+            base: first_assessed + first_special + first_fee + first_interest,
+            paid: clean(get("#ContentPlaceHolder1_lblFirstPayment")),
+            due: clean(get("#ContentPlaceHolder1_lblTax1st"))
+        },
+
+        second_half: {
+            base: second_assessed + second_special + second_fee + second_interest,
+            paid: clean(get("#ContentPlaceHolder1_lblSecondPayment")),
+            due: clean(get("#ContentPlaceHolder1_lblTax2nd"))
+        },
+
+        full_payment: {
+            base:
+                clean(get("#ContentPlaceHolder1_lblOrigTaxAmt")) +
+                clean(get("#ContentPlaceHolder1_lblOrigSAAmt")) +
+                clean(get("#ContentPlaceHolder1_lblOrigFeeAmt")) +
+                clean(get("#ContentPlaceHolder1_lblFullInterest")),
+            paid: clean(get("#ContentPlaceHolder1_lblPaidTotal")),
+            due: clean(get("#ContentPlaceHolder1_lblTaxFull"))
+        }
+
+    };
+});
 
         const currentYear = new Date().getFullYear() - 1;
         const year = currentYear + 1;
@@ -251,6 +299,9 @@ const account_search_arapahoe = async (page, parcel) => {
             .catch(err => reject(err));
     });
 };
+
+
+
 
 // -------------------------------------------------------------
 // EXPRESS HANDLER

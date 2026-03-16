@@ -1,7 +1,10 @@
 // AUTHOR: POOJITHA
 const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
+const fs = require("fs");
 const PDFParser = require("pdf2json");
-const fetch = require("node-fetch");
+const base64 = require("base64topdf");
+const path = require("node:path");
+const electron = require('electron');
 
 const timeout_option = { timeout: 90000 };
 
@@ -39,43 +42,131 @@ const counties = [
 // TAX NOTES
 // -------------------------------------------------------------
 function TaxNotes(data) {
+
+  let yearForDue;
+  if (data.tax_history && data.tax_history.length) {
+    const last = data.tax_history[data.tax_history.length - 1].due_date;
+    const d = new Date(last);
+    yearForDue = isNaN(d.getFullYear()) ? new Date().getFullYear() : d.getFullYear();
+  } else {
+    yearForDue = new Date().getFullYear();
+  }
+
+  const dueText = `03/02/${yearForDue} AND 06/15/${yearForDue} FOR SEMI-ANNUAL, 04/30/${yearForDue} FOR ANNUAL`;
+
   if (!data.tax_history || data.tax_history.length === 0) {
     data.notes =
-      "ALL PRIORS ARE PAID, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE LAST DAY OF FEB & 06/15";
+      `ALL PRIORS ARE PAID, NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
     data.delinquent = "NONE";
     return data;
   }
 
+  // sort by year
   data.tax_history.sort((a, b) => Number(a.year) - Number(b.year));
 
-  const latest = data.tax_history.at(-1);
-  const priorDelq = data.tax_history
-    .slice(0, -1)
-    .some((r) => r.status === "Delinquent");
+  const latestYear = data.tax_history[data.tax_history.length - 1].year;
+  const latestYearRecords = data.tax_history.filter(r => r.year == latestYear);
 
-  const NOTE =
-    ", NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE 02/28 & 06/16 FOR SEMI-ANNUAL, 04/30 & 05/01 FOR ANNUAL";
+  const priorDelinquentExists = data.tax_history
+    .filter(r => r.year != latestYear)
+    .some(r => r.status === "Delinquent");
 
-  if (latest.status === "Paid") {
-    data.notes = priorDelq
-      ? `PRIORS ARE DELINQUENT, ${latest.year} TAXES ARE PAID${NOTE}`
-      : `ALL PRIORS ARE PAID, ${latest.year} TAXES ARE PAID${NOTE}`;
-    data.delinquent = priorDelq
-      ? "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF"
-      : "NONE";
-    return data;
+  const priorText = priorDelinquentExists
+    ? "PRIORS ARE DELINQUENT"
+    : "ALL PRIORS ARE PAID";
+
+  // --------------------------------------------------
+  // ANNUAL PAYMENT (ONLY 1 ROW)
+  // --------------------------------------------------
+  if (latestYearRecords.length === 1) {
+
+    const status = latestYearRecords[0].status;
+
+    if (status === "Paid") {
+
+      data.notes =
+        `${priorText}, ${latestYear} TAXES ARE PAID, ` +
+        `NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+    } else if (status === "Due") {
+
+      data.notes =
+        `${priorText}, ${latestYear} TAXES ARE DUE, ` +
+        `NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+    } else if (status === "Delinquent") {
+
+      data.notes =
+        `${latestYear} TAXES ARE DELINQUENT, ` +
+        `NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+    } else {
+
+      data.notes = `${latestYear} TAX STATUS UNKNOWN`;
+
+    }
+
   }
 
-  if (latest.status === "Due") {
-    data.notes = priorDelq
-      ? `PRIORS ARE DELINQUENT, ${latest.year} TAXES ARE DUE${NOTE}`
-      : `ALL PRIORS ARE PAID, ${latest.year} TAXES ARE DUE${NOTE}`;
+  // --------------------------------------------------
+  // SEMI-ANNUAL PAYMENT (2 ROWS)
+  // --------------------------------------------------
+  else {
+
+    latestYearRecords.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+    const firstHalf = latestYearRecords[0];
+    const secondHalf = latestYearRecords[1];
+
+    const firstStatus = firstHalf ? firstHalf.status : "Unknown";
+    const secondStatus = secondHalf ? secondHalf.status : "Unknown";
+
+    if (firstStatus === "Paid" && secondStatus === "Due") {
+
+      data.notes =
+        `${priorText}, ${latestYear} TAXES 1ST HALF IS PAID 2ND HALF IS DUE, ` +
+        `NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+    } 
+    else if (firstStatus === "Paid" && secondStatus === "Paid") {
+
+      data.notes =
+        `${priorText}, ${latestYear} TAXES ARE PAID, ` +
+        `NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+    } 
+    else if (firstStatus === "Due" && secondStatus === "Due") {
+
+      data.notes =
+        `${priorText}, ${latestYear} TAXES ARE DUE, ` +
+        `NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+    } 
+    else if (firstStatus === "Delinquent" || secondStatus === "Delinquent") {
+
+      data.notes =
+        `${latestYear} TAXES ARE DELINQUENT, ` +
+        `NORMALLY TAXES ARE PAID SEMI-ANNUALLY/ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+    } 
+    else {
+
+      data.notes = `${latestYear} TAX STATUS UNKNOWN`;
+
+    }
+
+  }
+
+  // --------------------------------------------------
+  // DELINQUENT FLAG
+  // --------------------------------------------------
+
+  if (priorDelinquentExists || data.tax_history.some(r => r.status === "Delinquent")) {
+    data.delinquent = "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF";
+  } else {
     data.delinquent = "NONE";
-    return data;
   }
 
-  data.notes = `${latest.year} TAXES ARE DELINQUENT${NOTE}`;
-  data.delinquent = "TAXES ARE DELINQUENT, NEED TO CALL FOR PAYOFF";
   return data;
 }
 
@@ -83,6 +174,7 @@ function TaxNotes(data) {
 // GUNNISON STEP-1
 // -------------------------------------------------------------
 const gunn_1 = async (page, url, account) => {
+
   await page.goto(url, { waitUntil: "domcontentloaded" });
   await page.waitForSelector("#searchToken", timeout_option);
 
@@ -90,15 +182,32 @@ const gunn_1 = async (page, url, account) => {
   await page.type("#searchToken", String(account), { delay: 50 });
 
   await Promise.all([
-    page.waitForNavigation({ waitUntil: "networkidle2" }, timeout_option),
-    page.click("button[type='submit']"),
+    page.waitForNavigation({ waitUntil: "networkidle2" }),
+    page.click("button[type='submit']")
   ]);
 
   if (!page.url().includes("/TaxAccount/List")) {
     throw new Error("Account not found");
   }
 
-  return page.url();
+  // ---------------------------
+  // Extract account number
+  // ---------------------------
+  const accountNumber = await page.evaluate(() => {
+
+    const h3 = Array.from(document.querySelectorAll("h3"))
+      .find(el => el.innerText.includes("Account Number"));
+
+    if (!h3) return null;
+
+    return h3.innerText.replace("Account Number:", "").trim();
+  });
+
+  if (!accountNumber) {
+    throw new Error("Account number not found");
+  }
+
+  return accountNumber;
 };
 
 // -------------------------------------------------------------
@@ -157,75 +266,197 @@ const gunn_2 = async (page, billUrl, countyData, account) => {
     // -------------------------------------------------
     // TAX HISTORY (LATEST YEAR ONLY)
     // -------------------------------------------------
-    let tax_history = await page.evaluate(() => {
-      const clean = (v) => Number(v.replace(/[^0-9.-]/g, "")) || 0;
-      const today = new Date();
+let tax_history = await page.evaluate(() => {
 
-      return Array.from(document.querySelectorAll(".ctrlHolder"))
-        .map((row) => {
-          const l = row.querySelectorAll("ul.alternate label");
-          if (l.length < 6) return null;
+  const clean = (v) => Number(v.replace(/[^0-9.-]/g, "")) || 0;
+  const today = new Date();
 
-          const year = parseInt(l[0].innerText, 10);
-          if (!year) return null;
+  const getStatus = (due, delq, paidAmt, base) => {
+    const delqDate = new Date(delq);
+    if (paidAmt >= base) return "Paid";
+    if (today > delqDate) return "Delinquent";
+    return "Due";
+  };
 
-          const total = clean(l[2].innerText);
-          const paid = clean(l[5].innerText);
-          const delqDate = new Date(`${year + 1}-05-01`);
+  return Array.from(document.querySelectorAll(".ctrlHolder"))
+    .flatMap((row) => {
 
-          let status = "Due";
-          if (paid >= total) status = "Paid";
-          else if (today > delqDate) status = "Delinquent";
+      const l = row.querySelectorAll("ul.alternate label");
+      if (l.length < 6) return [];
 
-          return {
-            jurisdiction: "County",
-            year: String(year),
-            payment_type: "Annual",
-            status,
-            base_amount: `$${total.toFixed(2)}`,
-            amount_paid: `$${paid.toFixed(2)}`,
-            amount_due: paid >= total ? "$0.00" : `$${(total - paid).toFixed(2)}`,
-            due_date: `04/30/${year + 1}`,
-            delq_date: `05/01/${year + 1}`,
-            paid_date: "-",
-            good_through_date: "",
-            mailing_date: "N/A",
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => Number(b.year) - Number(a.year))
-        .slice(0, 1);
-    });
+      const year = parseInt(l[0].innerText, 10);
+      if (!year) return [];
 
-    // -------------------------------------------------
-    // IF PAID, FETCH PDF IN MEMORY ONLY
-    // -------------------------------------------------
+      const typeText = l[1].innerText.toLowerCase();
+
+      const total = clean(l[2].innerText);
+      const paid = clean(l[5].innerText);
+
+      // -----------------------------
+      // SEMI ANNUAL
+      // -----------------------------
+      if (typeText.includes("1st") || typeText.includes("2nd")) {
+
+        const half = total / 2;
+
+        const due1 = `03/02/${year + 1}`;
+        const delq1 = `03/03/${year + 1}`;
+
+        const due2 = `06/15/${year + 1}`;
+        const delq2 = `06/16/${year + 1}`;
+
+        const firstPaid = typeText.includes("1st") ? paid : 0;
+
+        const row1 = {
+          jurisdiction: "County",
+          year: String(year),
+          payment_type: "Semi-Annual",
+          status: getStatus(due1, delq1, firstPaid, half),
+          base_amount: `$${half.toFixed(2)}`,
+          amount_paid: `$${firstPaid.toFixed(2)}`,
+          amount_due: `$${Math.max(half - firstPaid, 0).toFixed(2)}`,
+          due_date: due1,
+          delq_date: delq1,
+          paid_date: "-",
+          good_through_date: "",
+          mailing_date: "N/A",
+        };
+
+        const row2 = {
+          jurisdiction: "County",
+          year: String(year),
+          payment_type: "Semi-Annual",
+          status: getStatus(due2, delq2, 0, half),
+          base_amount: `$${half.toFixed(2)}`,
+          amount_paid: "$0.00",
+          amount_due: `$${half.toFixed(2)}`,
+          due_date: due2,
+          delq_date: delq2,
+          paid_date: "-",
+          good_through_date: "",
+          mailing_date: "N/A",
+        };
+
+        return [row1, row2];
+      }
+
+      // -----------------------------
+      // ANNUAL (FIXED)
+      // -----------------------------
+      const due = `04/30/${year + 1}`;
+      const delq = `05/01/${year + 1}`;
+
+      return [{
+        jurisdiction: "County",
+        year: String(year),
+        payment_type: "Annual",
+        status: getStatus(due, delq, paid, total),
+        base_amount: `$${total.toFixed(2)}`,
+        amount_paid: `$${paid.toFixed(2)}`,
+        amount_due: paid >= total ? "$0.00" : `$${(total - paid).toFixed(2)}`,
+        due_date: due,
+        delq_date: delq,
+        paid_date: "-",
+        good_through_date: "",
+        mailing_date: "N/A",
+      }];
+
+    })
+.sort((a, b) => Number(b.year) - Number(a.year))
+.filter((r, i, arr) => {
+  // If annual → keep only first row
+  if (r.payment_type === "Annual") {
+    return i === 0;
+  }
+  // If semi-annual → keep first two rows
+  return i < 2;
+});  //  FIXED: annual should return only 1 row
+
+});
+
+    // --------------------
+    // IF PAID, FETCH 
+    // -------------------
     if (tax_history[0].status === "Paid") {
-      const pdfUrl = countyData.pdfUrl(account);
-      const pdfBuffer = Buffer.from(await fetch(pdfUrl).then((res) => res.arrayBuffer()));
 
+      const pdfUrl = countyData.pdfUrl(account);
+
+      // -----------------------------
+      // DOWNLOAD PDF IN BROWSER
+      // -----------------------------
+      const pdfBase64 = await page.evaluate(async (url) => {
+        const res = await fetch(url);
+        const blob = await res.blob();
+
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result.split(",")[1]);
+          reader.readAsDataURL(blob);
+        });
+
+      }, pdfUrl);
+
+      if (!pdfBase64) return;
+
+      // -----------------------------
+      // BASE64 → PDF FILE
+      // -----------------------------
+      // const pdfPath = `/tmp/${account}_payments.pdf`;
+      const file_name = Date.now() + "-" + account;
+      const pdfPath = path.join(electron.app.getPath('userData'), `${file_name}.pdf`);
+
+      await base64.base64Decode(pdfBase64, pdfPath);
+
+      // -----------------------------
+      // PARSE PDF
+      // -----------------------------
       const pdfText = await new Promise((resolve) => {
+
         const parser = new PDFParser();
-        parser.on("pdfParser_dataReady", (data) => {
+
+        parser.on("pdfParser_dataReady", data => {
+
           try {
-            const text = data.Pages.flatMap((p) =>
-              p.Texts.map((t) => decodeURIComponent(t.R[0].T))
+
+            const text = data.Pages.flatMap(p =>
+              p.Texts.map(t => decodeURIComponent(t.R[0].T))
             ).join(" ");
+
             resolve(text);
+
           } catch {
             resolve("");
-          } finally {
-            parser.removeAllListeners();
           }
+
+          parser.removeAllListeners();
+
         });
-        parser.on("pdfParser_dataError", () => resolve(""));
-        parser.parseBuffer(pdfBuffer); // parse directly in memory
+
+        parser.on("pdfParser_dataError", () => {
+          parser.removeAllListeners();
+          resolve("");
+        });
+
+        parser.loadPDF(pdfPath);
+
       });
 
+      // -----------------------------
+      // DELETE TEMP FILE
+      // -----------------------------
+      if (fs.existsSync(pdfPath)) {
+        fs.unlinkSync(pdfPath);
+      }
+
+      // -----------------------------
+      // EXTRACT DATE
+      // -----------------------------
       const allDates = pdfText.match(/\d{2}-\d{2}-\d{4}/g) || [];
+
       if (allDates.length) {
         tax_history[0].paid_date = allDates[0].replace(/-/g, "/");
       }
+
     }
 
     // -------------------------------------------------
@@ -251,10 +482,18 @@ const gunn_2 = async (page, billUrl, countyData, account) => {
 // ORCHESTRATOR
 // -------------------------------------------------------------
 const account_search = async (page, countyData, account) => {
-  await gunn_1(page, countyData.url, account);
-  return TaxNotes(await gunn_2(page, countyData.billUrl(account), countyData, account));
-};
 
+  const accountNumber = await gunn_1(page, countyData.url, account);
+
+  return TaxNotes(
+    await gunn_2(
+      page,
+      countyData.billUrl(accountNumber),
+      countyData,
+      accountNumber
+    )
+  );
+};
 // -------------------------------------------------------------
 // EXPRESS HANDLER
 // -------------------------------------------------------------

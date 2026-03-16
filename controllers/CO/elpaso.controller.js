@@ -1,7 +1,10 @@
 //Author:Sanam Poojitha
 const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 const PDFParser = require("pdf2json");
-const fetch = require("node-fetch");
+const fs = require("fs");
+const base64 = require("base64topdf");
+const path = require("node:path");
+const electron = require('electron');
 
 const TIMEOUT = 90000;
 
@@ -52,6 +55,7 @@ const money = (v) =>
    Notes & Tax History
 ============================================================ */
 function updateTaxNotes(data, numPayments = 2) {
+
   let yearForDue;
   if (data.tax_history && data.tax_history.length) {
     const last = data.tax_history[data.tax_history.length - 1].due_date;
@@ -60,6 +64,7 @@ function updateTaxNotes(data, numPayments = 2) {
   } else {
     yearForDue = new Date().getFullYear();
   }
+
   const dueText = `03/02/${yearForDue} AND 06/15/${yearForDue}`;
 
   if (!data.tax_history || data.tax_history.length === 0) {
@@ -68,34 +73,59 @@ function updateTaxNotes(data, numPayments = 2) {
     return data;
   }
 
+  // sort by year
   data.tax_history.sort((a, b) => Number(a.year) - Number(b.year));
-  const latest = data.tax_history[data.tax_history.length - 1];
-  const priorDelinquentExists = data.tax_history.slice(0, -1).some((r) => r.status === "Delinquent");
 
-  if (latest.status === "Paid") {
-    data.notes = priorDelinquentExists
-      ? `ALL PRIORS ARE PAID, ${latest.year} TAXES ARE PAID, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`
-      : `ALL PRIORS ARE PAID, ${latest.year} TAXES ARE PAID, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
-    data.delinquent = priorDelinquentExists ? "TAXES ARE DELINQUENT, CALL FOR PAYOFF" : "NONE";
-  } else if (latest.status === "Delinquent") {
-    data.notes = priorDelinquentExists
-      ? `ALL PRIORS ARE PAID, ${latest.year} TAXES ARE ALSO DELINQUENT, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`
-      : `PRIOR YEAR TAXES ARE PAID, ${latest.year} TAXES ARE DELINQUENT, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
-    data.delinquent = "TAXES ARE DELINQUENT, CALL FOR PAYOFF";
-  } else if (latest.status === "Due" ) {
-    data.notes = priorDelinquentExists
-      ? `ALL PRIORS ARE PAID, ${latest.year} TAXES ARE DUE, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`
-      : `ALL PRIORS ARE PAID, ${latest.year} TAXES ARE DUE, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
-    // if any prior year is delinquent we still need a payoff message
-    data.delinquent = priorDelinquentExists ? "TAXES ARE DELINQUENT, CALL FOR PAYOFF" : "NONE";
-  } else {
-    data.notes = `${latest.year} TAX STATUS UNKNOWN`;
-    data.delinquent = "TAXES ARE DELINQUENT, CALL FOR PAYOFF";
+  const latestYear = data.tax_history[data.tax_history.length - 1].year;
+
+  const latestYearRecords = data.tax_history.filter(r => r.year == latestYear);
+
+  const firstHalf = latestYearRecords.find(r => r.due_date.includes("03") || r.payment_type === "Semi-Annual");
+  const secondHalf = latestYearRecords.find(r => r.due_date.includes("06"));
+
+  let firstStatus = firstHalf ? firstHalf.status : "Unknown";
+  let secondStatus = secondHalf ? secondHalf.status : "Unknown";
+
+  const priorDelinquentExists = data.tax_history
+    .filter(r => r.year != latestYear)
+    .some(r => r.status === "Delinquent");
+
+  // build note text
+  if (firstStatus === "Paid" && secondStatus === "Due") {
+
+    data.notes = `ALL PRIORS ARE PAID, ${latestYear} TAXES 1ST INSTALLMENT IS PAID 2ND INSTALLMENT IS DUE, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+  } 
+  else if (firstStatus === "Paid" && secondStatus === "Paid") {
+
+    data.notes = `ALL PRIORS ARE PAID, ${latestYear} TAXES ARE PAID, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+  } 
+  else if (firstStatus === "Due" && secondStatus === "Due") {
+
+    data.notes = `ALL PRIORS ARE PAID, ${latestYear} TAXES ARE DUE, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+  } 
+  else if (firstStatus === "Delinquent" || secondStatus === "Delinquent") {
+
+    data.notes = `ALL PRIORS ARE PAID, ${latestYear} TAXES ARE DELINQUENT, NORMALLY TAXES ARE PAID SEMI-ANNUALLY, NORMAL DUE DATES ARE ${dueText}`;
+
+
+  } 
+  else {
+
+    data.notes = `${latestYear} TAX STATUS UNKNOWN`;
+
   }
+
+ if (priorDelinquentExists || firstStatus === "Delinquent" || secondStatus === "Delinquent") {
+  data.delinquent = "TAXES ARE DELINQUENT, CALL FOR PAYOFF";
+} else {
+  data.delinquent = "NONE";
+}
 
   return data;
 }
-
 /* ============================================================
    HTML Scraper
 ============================================================ */
@@ -112,7 +142,7 @@ const EL_1 = async (page, account) => {
   const data = await page.evaluate(() => {
     let owner_name = "N/A";
     let property_address = "N/A";
-
+let tax_year = null;
     const grow = document.querySelector(".tw-grow");
     if (grow) {
       const textBlocks = Array.from(grow.querySelectorAll("div"))
@@ -132,27 +162,33 @@ const EL_1 = async (page, account) => {
       .map((d) => d.innerText.trim())
       .find(Boolean) || "N/A";
 
-    let htmlPaid = false;
+let firstHalfPaid = false;
+let secondHalfDue = false;
 
-    // try to capture the tax year from the header text on the page
-    let tax_year = null;
-    const header = document.querySelector("div.tw-text-xl.tw-font-bold");
-    if (header) {
-      const m = header.innerText.match(/(20\d{2})/);
-      if (m) tax_year = Number(m[1]);
-    }
-    const paymentOptions = document.querySelectorAll('input[type="radio"][name^="bill_"]');
-    if (!paymentOptions || paymentOptions.length === 0) htmlPaid = true;
-    const billCol = document.querySelector('[id^="bill_group_"][id$="_parcel_column"]');
-    if (billCol) {
-      const txt = billCol.innerText.toLowerCase();
-      if (txt.includes("paid") || txt.includes("$0.00")) htmlPaid = true;
-    }
+const messages = document.querySelectorAll(".bill-message");
 
-    const pageText = document.body.innerText.toLowerCase();
-    if (pageText.includes("paid") && pageText.includes("$0.00")) htmlPaid = true;
+messages.forEach(m => {
+  const txt = m.innerText.toLowerCase();
 
-    return { owner_name: [owner_name], property_address, parcel_number: parcel.replace(/[^0-9]/g, ""), htmlPaid, tax_year };
+  if (txt.includes("1st half") && txt.includes("paid")) {
+    firstHalfPaid = true;
+  }
+});
+
+const secondHalf = document.querySelector('label[for*="second_half"]');
+
+if (secondHalf) {
+  secondHalfDue = true;
+}
+
+   return {
+  owner_name: [owner_name],
+  property_address,
+  parcel_number: parcel.replace(/[^0-9]/g, ""),
+  firstHalfPaid,
+  secondHalfDue,
+  tax_year
+};
   });
 
   return {
@@ -172,6 +208,11 @@ const EL_1 = async (page, account) => {
 ============================================================ */
 const extractTaxYearFromPdf = (lines) => {
   const currentYear = new Date().getFullYear();
+    // detect "2025 TAXES PAYABLE 2026"
+  for (const l of lines) {
+    const m = l.match(/\b(20\d{2})\s+taxes\s+payable\s+20\d{2}/i);
+    if (m) return Number(m[1]);
+  }
   for (const l of lines) {
     const m = l.match(/tax\s*year\s*(20\d{2})/i);
     if (m) return Number(m[1]);
@@ -237,42 +278,92 @@ const extractPropertyDescriptionFromPdf = (lines) => {
 
 const EL_2 = async (main_data, page, account) => {
   try {
+
     const pdfLink = await page.evaluate(() =>
       document.querySelector('a[aria-label="Download Bill PDF Button"]')?.getAttribute("href")
     );
+
     if (!pdfLink) return main_data;
 
     const pdfUrl = `https://www.paydici.com${pdfLink}`;
-    const res = await fetch(pdfUrl);
-    if (!res.ok) return main_data;
 
-    const pdfBuffer = Buffer.from(await res.arrayBuffer());
+    // ------------------------------------
+    // DOWNLOAD PDF USING BROWSER
+    // ------------------------------------
+    const pdfBase64 = await page.evaluate(async (url) => {
+      const res = await fetch(url);
+      const blob = await res.blob();
+
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(",")[1]);
+        reader.readAsDataURL(blob);
+      });
+    }, pdfUrl);
+
+    if (!pdfBase64) return main_data;
+
+    // ------------------------------------
+    // CONVERT BASE64 → PDF FILE
+    // ------------------------------------
+    // const pdfPath = `/tmp/${account}.pdf`;
+    const file_name = Date.now() + "-" + account;
+    const pdfPath = path.join(electron.app.getPath('userData'), `${file_name}.pdf`);
+
+    await base64.base64Decode(pdfBase64, pdfPath);
+
+    // ------------------------------------
+    // PARSE PDF
+    // ------------------------------------
     const lines = await new Promise((resolve) => {
+
       const parser = new PDFParser();
+
       parser.on("pdfParser_dataReady", (pdf) => {
+
         const out = [];
+
         try {
+
           pdf.Pages.forEach((p) =>
             p.Texts.forEach((t) => {
               const txt = decodeURIComponent(t.R[0].T).trim();
               if (txt) out.push(txt);
             })
           );
+
         } catch {}
+
         parser.removeAllListeners();
         resolve(out);
+
       });
+
       parser.on("pdfParser_dataError", () => {
         parser.removeAllListeners();
         resolve([]);
       });
-      parser.parseBuffer(pdfBuffer);
+
+      parser.loadPDF(pdfPath);
+
     });
+
+    // ------------------------------------
+    // DELETE TEMP FILE
+    // ------------------------------------
+    if (fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
+    }
 
     if (!lines.length) return main_data;
 
+    // continue your existing logic
     main_data.property_address = extractPropertyAddressFromPdf(lines);
     main_data.property_description = extractPropertyDescriptionFromPdf(lines);
+
+   
+
+    // remaining code unchanged
 
     const taxYear = main_data.tax_year || extractTaxYearFromPdf(lines);
     const installments = [];
@@ -301,12 +392,17 @@ const EL_2 = async (main_data, page, account) => {
       let status = determineStatusByDate(dueDate, delq_date);
       let amount_paid = "$0.00";
       let amount_due = money(inst.amount);
+if (inst.label === "FIRST HALF" && main_data.firstHalfPaid) {
+  status = "Paid";
+  amount_paid = money(inst.amount);
+  amount_due = "$0.00";
+}
 
-      if (main_data.htmlPaid) {
-        status = "Paid";
-        amount_paid = money(inst.amount);
-        amount_due = "$0.00";
-      }
+if (inst.label === "SECOND HALF" && main_data.secondHalfDue) {
+  status = determineStatusByDate(dueDate, delq_date);
+  amount_paid = "$0.00";
+  amount_due = money(inst.amount);
+}
 
       return {
         jurisdiction: "County",

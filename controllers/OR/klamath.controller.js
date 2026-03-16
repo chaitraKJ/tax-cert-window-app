@@ -1,8 +1,12 @@
+//Author:Sanam Poojitha
 const getBrowserInstance = require("../../utils/chromium/browserLaunch.js");
 
 const PDFParser = require("pdf2json");
-const fetch = require("node-fetch");
+const fs = require("fs");
+const base64 = require("base64topdf");
 const timeout_option = { timeout: 90000 };
+const path = require("node:path");
+const electron = require('electron');
 
 /* ============================================================
    Helpers
@@ -85,9 +89,9 @@ const klamath_1 = async (page, account) => {
     await page.waitForSelector("#on_mobile_select",{timeout_option});
     await page.select("#on_mobile_select", "id");
     await page.locator("input#q").fill(account);
-	
+  
     await page.click("#search-button input[type=submit]",timeout_option);
-	await page.waitForSelector(".tw-grow",{timeout_option})
+  await page.waitForSelector(".tw-grow",{timeout_option})
 
     const data = await page.evaluate(() => {
         let owner_name = "N/A";
@@ -196,13 +200,35 @@ const klamath_2 = async (main_data, page, account) => {
     // ------------------------------------
     // DOWNLOAD PDF (IN MEMORY)
     // ------------------------------------
-    const res = await fetch(fullPdf);
-    if (!res.ok) {
-      console.log("ERROR downloading PDF:", res.status);
-      return main_data;
-    }
+// ------------------------------------
+// DOWNLOAD PDF IN BROWSER
+// ------------------------------------
+const pdfBase64 = await page.evaluate(async (url) => {
 
-    const pdfBuffer = Buffer.from(await res.arrayBuffer());
+  const res = await fetch(url);
+  const blob = await res.blob();
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(",")[1]);
+    reader.readAsDataURL(blob);
+  });
+
+}, fullPdf);
+
+if (!pdfBase64) {
+  console.log("Failed to fetch PDF");
+  return main_data;
+}
+
+// ------------------------------------
+// BASE64 → TEMP PDF FILE
+// ------------------------------------
+// const pdfPath = `/tmp/${account}_tax.pdf`;
+const file_name = Date.now() + "-" + account;
+const pdfPath = path.join(electron.app.getPath('userData'), `${file_name}.pdf`);
+
+await base64.base64Decode(pdfBase64, pdfPath);
 
     // ------------------------------------
     // PARSE PDF BUFFER (NO TEMP FILE)
@@ -232,8 +258,11 @@ const klamath_2 = async (main_data, page, account) => {
         resolve([]);
       });
 
-      parser.parseBuffer(pdfBuffer); 
+      parser.loadPDF(pdfPath);
     });
+    if (fs.existsSync(pdfPath)) {
+  fs.unlinkSync(pdfPath);
+}
 
     // ------------------------------------
     // EXTRACT VALUES
